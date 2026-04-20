@@ -1,0 +1,19 @@
+---
+import siteConfig from '../data/site-config';
+import Button from './Button.astro';
+
+type Props = { class?: string };
+
+const { class: className } = Astro.props;
+const subscribe = siteConfig.subscribe;
+if (!subscribe?.enabled || !subscribe?.href) {
+    return;
+}
+---
+
+<section class:list={['border-main flex flex-col items-center gap-2 border border-dashed px-8 py-12 text-center sm:px-12 sm:py-16', className]}>
+    {subscribe.title && <h2 class="w-full max-w-xl font-serif text-xl leading-tight font-medium sm:text-2xl">{subscribe.title}</h2>}
+    <div class:list={['mt-6 flex w-full max-w-xl justify-center', { 'mt-0': !subscribe.title }]}>
+        <Button href={subscribe.href}>{subscribe.buttonText || 'Subscribe via RSS'}</Button>
+    </div>
+</section>
