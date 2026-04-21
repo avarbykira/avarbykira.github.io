@@ -10,7 +10,7 @@ const siteConfig: SiteConfig = {
     //     alt: 'site config avatar'
     // },
     title: '水母 / Jellyfish',
-    subtitle: '技术/音乐/摄影. 一个暂时还无法介绍自己的人。',
+    subtitle: '技术/音乐/摄影. 一个暂时还没想好怎么介绍自己的人。',
     description: '在不易发现的浅滩上，水母在这里伸展触角。',
     // image: {
     //     src: '/dante-preview.jpg',
