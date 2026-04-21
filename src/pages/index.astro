@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import Button from '../components/Button.astro';
+import FormattedDate from '../components/FormattedDate.astro';
 import Hero from '../components/Hero.astro';
 import PostPreview from '../components/PostPreview.astro';
 import ProjectPreview from '../components/ProjectPreview.astro';
@@ -12,6 +13,16 @@ import Subscribe from '../components/Subscribe.astro';
 const posts = (await getCollection('blog')).sort(sortItemsByDateDesc);
 const latestPost = posts[0];
 const featuredPosts = posts.filter(({ data }) => data.isFeatured);
+const latestPostContentPreview = latestPost
+    ? latestPost.body
+          .replace(/^---[\s\S]*?---/, '')
+          .replace(/!\[.*?\]\(.*?\)/g, '')
+          .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+          .replace(/[`*_>#-]/g, '')
+          .replace(/\n{2,}/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim()
+    : '';
 
 const projects = (await getCollection('projects')).sort(sortItemsByDateDesc);
 const featuredProjects = projects.filter(({ data }) => data.isFeatured);
@@ -21,13 +32,34 @@ const featuredProjects = projects.filter(({ data }) => data.isFeatured);
     <Hero {...siteConfig.hero} />
     {
         latestPost && (
-            <div class="mb-16 sm:mb-24">
-                <h2 class="mb-12 font-serif text-xl italic sm:mb-16 sm:text-2xl">Latest Post</h2>
-                <PostPreview post={latestPost} class="mb-10 sm:mb-12" headingLevel="h3" />
-                {/* <div class="mt-12 sm:mt-16">
-                    <Button href="/blog">View All Posts</Button>
-                </div> */}
-            </div>
+            <section class="mb-16 border-y border-main/10 py-8 sm:mb-24 sm:py-10">
+                <div class="mb-4 flex items-center justify-between gap-4 sm:mb-5">
+                    <p class="text-[0.7rem] font-medium uppercase tracking-[0.28em] text-main/60">Latest Post</p>
+                    <div class="text-sm text-main/70">
+                        <FormattedDate date={latestPost.data.publishDate} />
+                    </div>
+                </div>
+
+                <a href={`/blog/${latestPost.id}/`} class="group block">
+                    <h2 class="max-w-3xl font-serif text-2xl leading-tight font-medium group-hover:underline group-hover:decoration-dashed group-hover:decoration-1 group-hover:underline-offset-4 sm:text-3xl">
+                        {latestPost.data.title}
+                    </h2>
+                    {
+                        latestPostContentPreview && (
+                            <p
+                                class="mt-3 max-w-3xl text-base leading-7 text-main/80"
+                                style="-webkit-box-orient: vertical; -webkit-line-clamp: 3; display: -webkit-box; overflow: hidden;"
+                            >
+                                {latestPostContentPreview}
+                            </p>
+                        )
+                    }
+                </a>
+
+                <div class="mt-5 sm:mt-6">
+                    <Button href={`/blog/${latestPost.id}/`}>Read Post</Button>
+                </div>
+            </section>
         )
     }
     {
