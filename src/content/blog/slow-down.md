@@ -11,9 +11,9 @@ isFeatured: true
 #     alt: A person standing at the window
 ---
 
-![image](../../assets/images/post-2.jpg)
+<!-- ![image](../../assets/images/post-2.jpg) -->
 
----
+<!-- --- -->
 
 最近越来越觉得我们需要有耐心一点，
 
