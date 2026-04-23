@@ -7,10 +7,10 @@ import PostPreview from '../components/PostPreview.astro';
 import ProjectPreview from '../components/ProjectPreview.astro';
 import siteConfig from '../data/site-config';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { sortItemsByDateDesc } from '../utils/data-utils';
+import { filterPublishedPosts, sortItemsByDateDesc } from '../utils/data-utils';
 import Subscribe from '../components/Subscribe.astro';
 
-const posts = (await getCollection('blog')).sort(sortItemsByDateDesc);
+const posts = filterPublishedPosts(await getCollection('blog')).sort(sortItemsByDateDesc);
 const latestPost = posts[0];
 const featuredPosts = posts.filter(({ data }) => data.isFeatured);
 const latestPostContentPreview = latestPost
