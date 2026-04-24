@@ -8,7 +8,7 @@ tags:
 isFeatured: false
 ---
 
-在 Wiwi 的博客上看到了一个蛮有意思的 [Blog 问题挑战](https://wiwi.blog/blog/blog-questions-challenge)，我也来写一个吧！
+在 [Wiwi 的博客](https://wiwi.blog/)上看到了一个蛮有意思的 [Blog 问题挑战](https://wiwi.blog/blog/blog-questions-challenge)，我也来写一个吧！
 
 ## 问题
 
