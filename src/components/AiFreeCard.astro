@@ -1,0 +1,160 @@
+---
+type Props = {
+    class?: string;
+    percent?: string;
+    title?: string;
+    description?: string;
+};
+
+const {
+    class: className,
+    percent = '',
+    title = 'This post is AI FREE',
+    description = '本文未经 AI 生成或润色，每个字都由我亲手敲下。'
+} = Astro.props;
+---
+
+<aside class:list={['aifb', className]}>
+    <div class="aifb-paper" aria-hidden="true"></div>
+    <div class="aifb-inner">
+        <div class="aifb-text">
+            <p class="aifb-percent">{percent}</p>
+            <p class="aifb-title">{title}</p>
+            <p class="aifb-desc">{description}</p>
+        </div>
+        <div class="aifb-stamp" aria-label="AI FREE POST stamp">
+            <span>AI FREE POST</span>
+        </div>
+    </div>
+</aside>
+
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Reenie+Beanie&display=swap');
+
+    .aifb {
+        position: relative;
+        overflow: hidden;
+        border-radius: 18px;
+        border: 1px solid color-mix(in srgb, var(--border-color-main) 10%, transparent);
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.04)),
+            color-mix(in srgb, var(--background-color-main) 88%, white 12%);
+        box-shadow: 0 1px 0 rgba(23, 23, 23, 0.03);
+    }
+
+    :global(html.dark) .aifb {
+        border-color: rgba(242, 241, 236, 0.12);
+        background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01)),
+            color-mix(in srgb, var(--background-color-main) 94%, white 6%);
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03);
+    }
+
+    .aifb-paper {
+        position: absolute;
+        inset: 6px;
+        border-radius: 12px;
+        border: 1px solid color-mix(in srgb, var(--border-color-main) 7%, transparent);
+        pointer-events: none;
+    }
+
+    :global(html.dark) .aifb-paper {
+        border-color: rgba(242, 241, 236, 0.08);
+    }
+
+    .aifb-inner {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 14px 16px;
+    }
+
+    .aifb-text {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .aifb-percent {
+        margin: 0;
+        font-family: var(--font-serif);
+        font-size: 0.72rem;
+        line-height: 1;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: color-mix(in srgb, var(--text-color-main) 42%, transparent);
+    }
+
+    .aifb-title {
+        margin: 0.45rem 0 0;
+        font-family: 'Reenie Beanie', 'Bradley Hand', 'Segoe Print', cursive;
+        font-size: 2rem;
+        line-height: 1;
+        font-style: normal;
+        letter-spacing: -0.01em;
+        color: color-mix(in srgb, var(--text-color-main) 92%, transparent);
+    }
+
+    .aifb-desc {
+        margin: 0.3rem 0 0;
+        font-size: 0.78rem;
+        line-height: 1.55;
+        color: color-mix(in srgb, var(--text-color-main) 62%, transparent);
+    }
+
+    .aifb-stamp {
+        flex-shrink: 0;
+        display: flex;
+        height: 60px;
+        width: 60px;
+        align-items: center;
+        justify-content: center;
+        border: 1.5px solid rgba(122, 20, 20, 0.3);
+        border-radius: 999px;
+        color: rgba(122, 20, 20, 0.7);
+        transform: rotate(-10deg);
+        box-shadow: inset 0 0 0 1px rgba(122, 20, 20, 0.08);
+    }
+
+    :global(html.dark) .aifb-stamp {
+        border-color: rgba(226, 174, 120, 0.5);
+        color: rgba(240, 196, 145, 0.82);
+        box-shadow: inset 0 0 0 1px rgba(240, 196, 145, 0.14);
+    }
+
+    .aifb-stamp span {
+        display: block;
+        max-width: 42px;
+        font-family: var(--font-serif);
+        font-size: 0.52rem;
+        line-height: 1.18;
+        letter-spacing: 0.13em;
+        text-align: center;
+        text-transform: uppercase;
+    }
+
+    @media (min-width: 640px) {
+        .aifb-inner {
+            padding: 15px 18px;
+        }
+
+        .aifb-title {
+            font-size: 2.2rem;
+        }
+
+        .aifb-desc {
+            font-size: 0.72rem;
+        }
+
+        .aifb-stamp {
+            height: 66px;
+            width: 66px;
+        }
+
+        .aifb-stamp span {
+            max-width: 46px;
+            font-size: 0.56rem;
+        }
+    }
+</style>
