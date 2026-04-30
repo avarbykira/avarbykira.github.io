@@ -90,7 +90,7 @@ const music = defineCollection({
                 type: z.string().optional(),
                 title: z.string().optional()
             }),
-            info: z
+            credits: z
                 .array(
                     z.object({
                         label: z.string(),

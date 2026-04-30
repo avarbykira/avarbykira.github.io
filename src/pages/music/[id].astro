@@ -1,5 +1,6 @@
 ---
 import { type CollectionEntry, getCollection, render } from 'astro:content';
+import { marked } from 'marked';
 import CustomImage from '../../components/CustomImage.astro';
 import FormattedDate from '../../components/FormattedDate.astro';
 import MusicPreview from '../../components/MusicPreview.astro';
@@ -26,8 +27,10 @@ type Props = {
 };
 
 const { track, prevTrack, nextTrack } = Astro.props;
-const { title, creator, publishDate, updatedDate, cover, audio, info = [], tags = [], seo } = track.data;
+const { title, creator, publishDate, updatedDate, cover, audio, credits = [], tags = [], seo } = track.data;
 const { Content } = await render(track);
+
+const renderCreditText = (text: string) => marked.parseInline(text, { async: false });
 ---
 
 <BaseLayout
@@ -73,41 +76,47 @@ const { Content } = await render(track);
                     )
                 }
 
-                <h2 class="mb-5 font-serif text-xl leading-tight font-medium">{audio.title ?? title}</h2>
+                <!-- <h2 class="mb-5 font-serif text-xl leading-tight font-medium">{audio.title ?? title}</h2> -->
 
                 <audio class="music-audio w-full" controls preload="metadata">
                     <source src={audio.src} type={audio.type ?? 'audio/mpeg'} />
                     Your browser does not support the audio element.
                 </audio>
 
-                <div class="music-player-separator"></div>
-
                 {
-                    info.length > 0 && (
-                        <dl class="music-info border-y text-base">
-                            {info.map((item) => (
-                                <div class="music-info-row grid grid-cols-[7rem_minmax(0,1fr)] gap-4 border-t py-3 first:border-t-0">
-                                    <dt class="font-serif italic">{item.label}</dt>
-                                    <dd class="leading-relaxed">
-                                        {item.links && item.links.length > 0 ? (
-                                            <span class="flex flex-wrap gap-x-3 gap-y-1">
-                                                {item.links.map((link) => (
-                                                    <a class="underline decoration-dashed decoration-1 underline-offset-2 hover:decoration-solid" href={link.href}>
-                                                        {link.text}
-                                                    </a>
-                                                ))}
-                                            </span>
-                                        ) : item.href && item.text ? (
-                                            <a class="underline decoration-dashed decoration-1 underline-offset-2 hover:decoration-solid" href={item.href}>
-                                                {item.text}
-                                            </a>
-                                        ) : (
-                                            item.text
-                                        )}
-                                    </dd>
-                                </div>
-                            ))}
-                        </dl>
+                    credits.length > 0 && (
+                        <>
+                            <h2 class="music-info-heading font-serif text-xl leading-tight italic">Credits</h2>
+                            <dl class="music-info border-y text-base">
+                                {credits.map((item) => (
+                                    <div class="music-info-row grid grid-cols-[7rem_minmax(0,1fr)] gap-4 border-t py-3 first:border-t-0">
+                                        <dt class="font-serif italic">{item.label}</dt>
+                                        <dd class="leading-relaxed">
+                                            {item.links && item.links.length > 0 ? (
+                                                <span class="flex flex-wrap gap-x-3 gap-y-1">
+                                                    {item.links.map((link) => (
+                                                        <a
+                                                            class="underline decoration-dashed decoration-1 underline-offset-2 hover:decoration-solid"
+                                                            href={link.href}
+                                                        >
+                                                            {link.text}
+                                                        </a>
+                                                    ))}
+                                                </span>
+                                            ) : item.href && item.text ? (
+                                                <a class="underline decoration-dashed decoration-1 underline-offset-2 hover:decoration-solid" href={item.href}>
+                                                    <span set:html={renderCreditText(item.text)} />
+                                                </a>
+                                            ) : item.text ? (
+                                                <span set:html={renderCreditText(item.text)} />
+                                            ) : (
+                                                ''
+                                            )}
+                                        </dd>
+                                    </div>
+                                ))}
+                            </dl>
+                        </>
                     )
                 }
 
@@ -148,21 +157,32 @@ const { Content } = await render(track);
     }
 
     .music-panel {
-        --audio-info-gap: 1.75rem;
+        --audio-info-gap: 3.75rem;
     }
 
     .music-audio {
         color-scheme: light;
     }
 
-    .music-player-separator {
-        margin-block: var(--audio-info-gap);
-        border-top: 1px solid var(--border-main);
+    .music-info-heading {
+        margin-top: var(--audio-info-gap);
+        margin-bottom: calc(var(--audio-info-gap) * 0.45);
     }
 
     .music-info,
     .music-info-row {
         border-color: color-mix(in srgb, var(--border-main) 35%, transparent);
+    }
+
+    :global(.music-info a) {
+        text-decoration-line: underline;
+        text-decoration-style: dashed;
+        text-decoration-thickness: 1px;
+        text-underline-offset: 2px;
+    }
+
+    :global(.music-info a:hover) {
+        text-decoration-style: solid;
     }
 
     :global(html.dark) .music-audio {
