@@ -7,65 +7,483 @@ import FormattedDate from './FormattedDate.astro';
 type Props = { track: CollectionEntry<'music'>; class?: string; headingLevel?: 'h2' | 'h3' };
 
 const { track, class: className, headingLevel = 'h2' } = Astro.props;
-const { title, creator, publishDate, updatedDate, cover, tags = [] } = track.data;
+const { title, project, creator, publishDate, updatedDate, cover, tags = [] } = track.data;
 const TitleTag = headingLevel;
+const publishYear = new Date(publishDate).getFullYear();
+const fallbackLabel = Array.from(title.trim()).slice(0, 2).join('') || 'LP';
+const sleeveKicker = project ?? creator ?? (tags[0] ? `#${tags[0]}` : 'Track');
 ---
 
-<a class:list={['group grid items-start gap-5', cover ? 'sm:grid-cols-[minmax(0,1fr)_7.5rem]' : 'sm:grid-cols-1', className]} href={`/music/${track.id}/`}>
-    <div class="min-w-0">
-        <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-            <TitleTag
-                class="font-serif text-xl leading-tight font-medium group-hover:underline group-hover:decoration-dashed group-hover:decoration-1 group-hover:underline-offset-4 sm:text-2xl"
-            >
-                {title}
-            </TitleTag>
-            {creator && <span class="font-serif text-lg leading-tight italic sm:text-xl">· {creator}</span>}
-        </div>
-        <div class="music-preview-date mt-2 text-sm leading-normal">
-            <FormattedDate date={publishDate} />
+<a class:list={['music-record group block', cover && 'music-record--with-cover', className]} href={`/music/${track.id}/`}>
+    <div class="music-record__vinyl" aria-hidden="true">
+        <div class="music-record__label">
             {
-                updatedDate && (
-                    <>
-                        {' '}
-                        <span>
-                            (Updated on <FormattedDate date={updatedDate} />)
-                        </span>
-                    </>
+                cover ? (
+                    <CustomImage src={cover.src} alt="" class="music-record__label-art" widths={[96, 160, 240]} sizes="(min-width: 640px) 96px, 72px" />
+                ) : (
+                    <span class="music-record__label-fallback">{fallbackLabel}</span>
+                )
+            }
+            <span class="music-record__spindle"></span>
+        </div>
+    </div>
+
+    <div class="music-record__sleeve">
+        {
+            cover && (
+                <>
+                    <CustomImage src={cover.src} alt="" class="music-record__sleeve-art" widths={[320, 520, 680]} sizes="(min-width: 640px) 360px, 72vw" />
+                    <span class="music-record__cover-stamp" aria-hidden="true">
+                        <CustomImage src={cover.src} alt="" class="music-record__cover-stamp-image" widths={[120, 180, 240]} sizes="88px" />
+                    </span>
+                </>
+            )
+        }
+
+        <div class="music-record__meta-strip" aria-hidden="true">
+            <span>{sleeveKicker}</span>
+            <span>{publishYear}</span>
+        </div>
+
+        <div class="music-record__content">
+            <div class="music-record__heading">
+                <TitleTag class="music-record__title font-serif text-xl leading-tight font-medium sm:text-2xl">
+                    {title}
+                </TitleTag>
+                {creator && <span class="music-record__creator font-serif text-lg leading-tight italic sm:text-xl">· {creator}</span>}
+            </div>
+
+            <div class="music-record__date mt-2 text-sm leading-normal">
+                <FormattedDate date={publishDate} />
+                {
+                    updatedDate && (
+                        <>
+                            {' '}
+                            <span>
+                                (Updated on <FormattedDate date={updatedDate} />)
+                            </span>
+                        </>
+                    )
+                }
+            </div>
+
+            {
+                tags.length > 0 && (
+                    <div class="music-record__tags mt-4 flex flex-wrap gap-x-4 gap-y-1 text-xs uppercase">
+                        {tags.map((tag) => (
+                            <span>#{tag}</span>
+                        ))}
+                    </div>
                 )
             }
         </div>
-        {
-            tags.length > 0 && (
-                <div class="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-xs uppercase">
-                    {tags.map((tag) => (
-                        <span>#{tag}</span>
-                    ))}
-                </div>
-            )
-        }
-        <div class="mt-5 hidden font-serif italic opacity-0 transition group-hover:opacity-100 sm:inline-flex sm:items-center sm:gap-1">
+
+        <span class="music-record__action font-serif italic">
             Listen <ArrowRight class="h-4 w-4 fill-current" />
-        </div>
+        </span>
     </div>
-    {
-        cover && (
-            <CustomImage
-                src={cover.src}
-                alt={cover.alt ?? ''}
-                class="music-preview-cover aspect-square w-24 justify-self-start object-cover sm:w-full sm:justify-self-end"
-                widths={[160, 240, 320]}
-                sizes="(min-width: 640px) 120px, 96px"
-            />
-        )
-    }
 </a>
 
 <style>
-    .music-preview-date {
-        color: color-mix(in srgb, var(--text-main) 58%, transparent);
+    .music-record {
+        --record-size: clamp(6.5rem, 24vw, 11rem);
+        --sleeve-edge: clamp(0.75rem, 2vw, 1.1rem);
+        --paper-shadow: color-mix(in oklab, var(--text-main) 20%, transparent);
+        --paper-line: color-mix(in oklab, var(--text-main) 16%, transparent);
+        position: relative;
+        min-height: max(12.4rem, calc(var(--record-size) + 1.7rem));
+        padding: 0.4rem 0;
+        isolation: isolate;
+        color: var(--text-main);
+        text-decoration: none;
+        outline: none;
     }
 
-    :global(html.dark) .music-preview-cover {
-        filter: brightness(0.78);
+    .music-record__sleeve {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        min-height: max(11.7rem, calc(var(--record-size) + 0.45rem));
+        width: calc(100% - var(--sleeve-edge));
+        flex-direction: column;
+        justify-content: space-between;
+        overflow: hidden;
+        border: 1px solid var(--paper-line);
+        border-radius: 8px;
+        background:
+            radial-gradient(circle at 17% 12%, color-mix(in oklab, white 32%, transparent) 0 0.1rem, transparent 0.12rem),
+            radial-gradient(circle at 88% 16%, color-mix(in oklab, var(--text-main) 9%, transparent) 0 0.08rem, transparent 0.1rem),
+            linear-gradient(135deg, color-mix(in oklab, var(--bg-muted) 86%, white), color-mix(in oklab, var(--bg-main) 86%, var(--text-main))),
+            repeating-linear-gradient(100deg, color-mix(in oklab, var(--text-main) 4%, transparent) 0 1px, transparent 1px 7px);
+        box-shadow:
+            0 1.5rem 3rem -2.15rem var(--paper-shadow),
+            inset 0 1px 0 color-mix(in oklab, white 48%, transparent),
+            inset -1.15rem 0 1.7rem -1.45rem color-mix(in oklab, var(--text-main) 44%, transparent);
+        transform-origin: left center;
+        transition:
+            transform 420ms cubic-bezier(0.2, 0.8, 0.2, 1),
+            box-shadow 420ms ease,
+            border-color 420ms ease;
+    }
+
+    .music-record__sleeve::before {
+        position: absolute;
+        inset: 0.65rem 0.6rem 0.65rem auto;
+        width: 1.05rem;
+        border-left: 1px solid color-mix(in oklab, var(--text-main) 14%, transparent);
+        background:
+            radial-gradient(
+                circle at 100% 50%,
+                transparent 0 0.86rem,
+                color-mix(in oklab, var(--text-main) 13%, transparent) 0.9rem 0.98rem,
+                transparent 1.02rem
+            ),
+            linear-gradient(90deg, transparent, color-mix(in oklab, var(--text-main) 8%, transparent));
+        content: '';
+        opacity: 0.78;
+        pointer-events: none;
+    }
+
+    .music-record__sleeve::after {
+        position: absolute;
+        inset: 0;
+        background:
+            linear-gradient(110deg, color-mix(in oklab, white 18%, transparent), transparent 34%),
+            repeating-linear-gradient(0deg, color-mix(in oklab, var(--text-main) 3%, transparent) 0 1px, transparent 1px 5px);
+        content: '';
+        opacity: 0.55;
+        pointer-events: none;
+    }
+
+    .music-record__sleeve-art {
+        position: absolute;
+        top: -22%;
+        right: -7%;
+        width: min(52%, 22rem);
+        aspect-ratio: 1;
+        border-radius: 999px;
+        object-fit: cover;
+        opacity: 0.3;
+        filter: saturate(1.25) contrast(1.08) blur(18px);
+        transform: rotate(7deg);
+        transition:
+            opacity 420ms ease,
+            transform 560ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .music-record__cover-stamp {
+        position: absolute;
+        right: clamp(1.1rem, 2.8vw, 1.7rem);
+        bottom: clamp(1rem, 2.4vw, 1.45rem);
+        z-index: 1;
+        display: block;
+        width: clamp(4rem, 13vw, 5.6rem);
+        aspect-ratio: 1;
+        overflow: hidden;
+        border: 1px solid color-mix(in oklab, var(--text-main) 24%, transparent);
+        border-radius: 5px;
+        box-shadow:
+            0 0.55rem 1.2rem color-mix(in oklab, var(--text-main) 15%, transparent),
+            inset 0 0 0 1px color-mix(in oklab, white 30%, transparent);
+        opacity: 0.7;
+        transform: rotate(2deg);
+        transition:
+            opacity 320ms ease,
+            transform 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .music-record__cover-stamp-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .music-record__meta-strip,
+    .music-record__content,
+    .music-record__action {
+        position: relative;
+        z-index: 2;
+    }
+
+    .music-record__meta-strip {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        border-bottom: 1px solid color-mix(in oklab, var(--text-main) 11%, transparent);
+        padding: 0.75rem clamp(1.2rem, 3vw, 1.9rem) 0.64rem;
+        color: color-mix(in oklab, var(--text-main) 58%, transparent);
+        font-size: 0.68rem;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        line-height: 1;
+    }
+
+    .music-record__meta-strip span {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .music-record__meta-strip span:first-child {
+        max-width: 72%;
+    }
+
+    .music-record__content {
+        padding: clamp(1.15rem, 2.5vw, 1.65rem) clamp(1.2rem, 3vw, 1.9rem) 1rem;
+    }
+
+    .music-record__heading {
+        display: flex;
+        max-width: min(100%, 31rem);
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 0.25rem 0.5rem;
+    }
+
+    .music-record__title {
+        display: inline;
+        text-decoration-line: underline;
+        text-decoration-style: dashed;
+        text-decoration-thickness: 1px;
+        text-underline-offset: 0.23em;
+        text-decoration-color: transparent;
+        transition: text-decoration-color 260ms ease;
+    }
+
+    .music-record__creator {
+        color: color-mix(in oklab, var(--text-main) 78%, transparent);
+    }
+
+    .music-record__date,
+    .music-record__tags {
+        color: color-mix(in oklab, var(--text-main) 68%, transparent);
+    }
+
+    .music-record__tags {
+        max-width: min(100%, 30rem);
+    }
+
+    .music-record__action {
+        display: inline-flex;
+        width: fit-content;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0 1.35rem 1.2rem clamp(1.2rem, 3vw, 1.9rem);
+        color: color-mix(in oklab, var(--text-main) 72%, transparent);
+        opacity: 0;
+        transform: translateX(-0.35rem);
+        transition:
+            opacity 260ms ease,
+            transform 360ms ease,
+            color 260ms ease;
+    }
+
+    .music-record__vinyl {
+        position: absolute;
+        top: 50%;
+        right: 0.1rem;
+        z-index: 1;
+        display: grid;
+        width: var(--record-size);
+        aspect-ratio: 1;
+        place-items: center;
+        border-radius: 999px;
+        background:
+            radial-gradient(circle at 50% 50%, transparent 0 16.5%, color-mix(in oklab, white 24%, transparent) 16.9% 17.9%, transparent 18.4% 22%),
+            radial-gradient(circle at 48% 47%, #181818 0 23%, #050505 23.5% 100%),
+            repeating-radial-gradient(circle at 50% 50%, #090909 0 0.11rem, #1d1d1d 0.12rem 0.17rem, #070707 0.18rem 0.32rem);
+        box-shadow:
+            0 1.85rem 2.9rem -1.45rem transparent,
+            inset 0.25rem 0.25rem 0.75rem color-mix(in oklab, white 8%, transparent),
+            inset -0.5rem -0.7rem 1.05rem color-mix(in oklab, black 92%, transparent);
+        transform: translate3d(calc(var(--sleeve-edge) * -0.2), -50%, 0) rotate(-7deg);
+        transform-origin: center;
+        transition:
+            transform 560ms cubic-bezier(0.16, 1, 0.3, 1),
+            filter 420ms ease,
+            box-shadow 420ms ease;
+        pointer-events: none;
+    }
+
+    .music-record__vinyl::before {
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background:
+            conic-gradient(from 214deg, transparent 0deg 34deg, color-mix(in oklab, white 26%, transparent) 45deg, transparent 64deg 360deg),
+            linear-gradient(108deg, transparent 0 44%, color-mix(in oklab, white 15%, transparent) 48%, transparent 55% 100%);
+        content: '';
+        mix-blend-mode: screen;
+        opacity: 0.32;
+        transition:
+            opacity 420ms ease,
+            transform 560ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .music-record__vinyl::after {
+        position: absolute;
+        inset: 8.5%;
+        border: 1px solid color-mix(in oklab, white 13%, transparent);
+        border-radius: inherit;
+        content: '';
+        opacity: 0.55;
+    }
+
+    .music-record__label {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        width: 38%;
+        aspect-ratio: 1;
+        place-items: center;
+        overflow: hidden;
+        border: 1px solid color-mix(in oklab, white 18%, transparent);
+        border-radius: 999px;
+        background:
+            radial-gradient(circle at center, color-mix(in oklab, var(--bg-main) 88%, white) 0 12%, transparent 13%),
+            linear-gradient(135deg, #b84f4c 0 49%, #2f6f7f 50% 100%);
+        box-shadow:
+            inset 0 0 0 0.28rem color-mix(in oklab, var(--bg-main) 78%, white),
+            0 0.18rem 0.45rem color-mix(in oklab, black 48%, transparent);
+    }
+
+    .music-record__label-art {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: saturate(1.08) contrast(1.04);
+    }
+
+    .music-record__label-fallback {
+        font-family: var(--font-serif);
+        font-size: clamp(0.9rem, 2vw, 1.25rem);
+        font-style: italic;
+        color: color-mix(in oklab, var(--bg-main) 92%, white);
+    }
+
+    .music-record__spindle {
+        position: absolute;
+        width: 0.44rem;
+        aspect-ratio: 1;
+        border-radius: 999px;
+        background: color-mix(in oklab, var(--bg-main) 88%, white);
+        box-shadow:
+            0 0 0 1px color-mix(in oklab, black 25%, transparent),
+            0 0.1rem 0.25rem color-mix(in oklab, black 42%, transparent);
+    }
+
+    .music-record:is(:hover, :focus-visible) .music-record__sleeve {
+        border-color: color-mix(in oklab, var(--text-main) 26%, transparent);
+        box-shadow:
+            0 1.9rem 3.3rem -2.05rem color-mix(in oklab, var(--text-main) 32%, transparent),
+            inset 0 1px 0 color-mix(in oklab, white 52%, transparent),
+            inset -1.15rem 0 1.7rem -1.45rem color-mix(in oklab, var(--text-main) 50%, transparent);
+        transform: translateX(-0.12rem) rotate(-0.22deg);
+    }
+
+    .music-record:is(:hover, :focus-visible) .music-record__sleeve-art {
+        opacity: 0.38;
+        transform: rotate(11deg) scale(1.05);
+    }
+
+    .music-record:is(:hover, :focus-visible) .music-record__cover-stamp {
+        opacity: 0.85;
+        transform: rotate(-1deg) translateY(-0.08rem);
+    }
+
+    .music-record:is(:hover, :focus-visible) .music-record__vinyl {
+        filter: saturate(1.05);
+        box-shadow:
+            0 1.85rem 2.9rem -1.45rem color-mix(in oklab, black 74%, transparent),
+            inset 0.25rem 0.25rem 0.75rem color-mix(in oklab, white 10%, transparent),
+            inset -0.5rem -0.7rem 1.05rem color-mix(in oklab, black 92%, transparent);
+        transform: translate3d(clamp(2.2rem, 7vw, 4.7rem), -50%, 0) rotate(4deg);
+    }
+
+    .music-record:is(:hover, :focus-visible) .music-record__vinyl::before {
+        opacity: 0.5;
+        transform: rotate(18deg);
+    }
+
+    .music-record:is(:hover, :focus-visible) .music-record__title {
+        text-decoration-color: currentColor;
+    }
+
+    .music-record:is(:hover, :focus-visible) .music-record__action {
+        color: var(--text-main);
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    .music-record:focus-visible .music-record__sleeve {
+        outline: 2px solid color-mix(in oklab, var(--text-main) 55%, transparent);
+        outline-offset: 4px;
+    }
+
+    :global(html.dark) .music-record__sleeve-art,
+    :global(html.dark) .music-record__cover-stamp-image,
+    :global(html.dark) .music-record__label-art {
+        filter: brightness(0.78) saturate(1.1) contrast(1.08);
+    }
+
+    @media (max-width: 640px) {
+        .music-record {
+            --record-size: clamp(7.3rem, 43vw, 9.5rem);
+            --sleeve-edge: 0.75rem;
+            min-height: auto;
+            padding-top: 0.15rem;
+        }
+
+        .music-record__sleeve {
+            min-height: max(10.4rem, calc(var(--record-size) + 0.45rem));
+            width: calc(100% - var(--sleeve-edge));
+        }
+
+        .music-record__vinyl {
+            top: 50%;
+            right: 0;
+            opacity: 1;
+            transform: translate3d(calc(var(--sleeve-edge) * -0.2), -50%, 0) rotate(-9deg);
+        }
+
+        .music-record:is(:hover, :focus-visible) .music-record__vinyl {
+            transform: translate3d(2rem, -50%, 0) rotate(2deg);
+        }
+
+        .music-record__sleeve-art {
+            top: -12%;
+            right: -16%;
+            width: 74%;
+            opacity: 0.22;
+        }
+
+        .music-record__cover-stamp {
+            width: 4.25rem;
+            opacity: 0.42;
+        }
+
+        .music-record__heading,
+        .music-record__tags {
+            max-width: calc(100% - 4.7rem);
+        }
+
+        .music-record__action {
+            opacity: 1;
+            transform: none;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .music-record__sleeve,
+        .music-record__sleeve-art,
+        .music-record__cover-stamp,
+        .music-record__title,
+        .music-record__action,
+        .music-record__vinyl,
+        .music-record__vinyl::before {
+            transition-duration: 1ms;
+        }
     }
 </style>

@@ -81,6 +81,7 @@ const music = defineCollection({
             title: z.string(),
             publishDate: contentDateSchema,
             updatedDate: contentDateSchema.optional(),
+            project: optionalStringSchema,
             creator: optionalStringSchema,
             isDraft: z.boolean().default(false),
             cover: imageSchema(image).optional(),
