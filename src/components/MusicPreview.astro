@@ -88,8 +88,21 @@ const sleeveKicker = project ?? creator ?? (tags[0] ? `#${tags[0]}` : 'Track');
     .music-record {
         --record-size: clamp(6.5rem, 24vw, 11rem);
         --sleeve-edge: clamp(0.75rem, 2vw, 1.1rem);
+        --stamp-size: clamp(4rem, 13vw, 5.6rem);
         --paper-shadow: color-mix(in oklab, var(--text-main) 20%, transparent);
         --paper-line: color-mix(in oklab, var(--text-main) 16%, transparent);
+        --sleeve-bg-base: color-mix(in oklab, var(--bg-muted) 90%, white);
+        --sleeve-bg-depth: color-mix(in oklab, var(--bg-main) 88%, var(--text-main));
+        --sleeve-highlight: color-mix(in oklab, white 36%, transparent);
+        --sleeve-inset-shadow: color-mix(in oklab, var(--text-main) 44%, transparent);
+        --sleeve-art-opacity: 0.3;
+        --sleeve-art-hover-opacity: 0.38;
+        --sleeve-art-filter: saturate(1.25) contrast(1.08) blur(18px);
+        --stamp-right: clamp(1.9rem, 4.6vw, 2.85rem);
+        --stamp-opacity: 0.7;
+        --stamp-hover-opacity: 0.85;
+        --stamp-image-filter: saturate(1.08) contrast(1.04);
+        --label-art-filter: saturate(1.08) contrast(1.04);
         position: relative;
         min-height: max(12.4rem, calc(var(--record-size) + 1.7rem));
         padding: 0.4rem 0;
@@ -111,14 +124,14 @@ const sleeveKicker = project ?? creator ?? (tags[0] ? `#${tags[0]}` : 'Track');
         border: 1px solid var(--paper-line);
         border-radius: 8px;
         background:
-            radial-gradient(circle at 17% 12%, color-mix(in oklab, white 32%, transparent) 0 0.1rem, transparent 0.12rem),
+            radial-gradient(circle at 17% 12%, var(--sleeve-highlight) 0 0.1rem, transparent 0.12rem),
             radial-gradient(circle at 88% 16%, color-mix(in oklab, var(--text-main) 9%, transparent) 0 0.08rem, transparent 0.1rem),
-            linear-gradient(135deg, color-mix(in oklab, var(--bg-muted) 86%, white), color-mix(in oklab, var(--bg-main) 86%, var(--text-main))),
+            linear-gradient(135deg, var(--sleeve-bg-base), var(--sleeve-bg-depth)),
             repeating-linear-gradient(100deg, color-mix(in oklab, var(--text-main) 4%, transparent) 0 1px, transparent 1px 7px);
         box-shadow:
             0 1.5rem 3rem -2.15rem var(--paper-shadow),
-            inset 0 1px 0 color-mix(in oklab, white 48%, transparent),
-            inset -1.15rem 0 1.7rem -1.45rem color-mix(in oklab, var(--text-main) 44%, transparent);
+            inset 0 1px 0 var(--sleeve-highlight),
+            inset -1.15rem 0 1.7rem -1.45rem var(--sleeve-inset-shadow);
         transform-origin: left center;
         transition:
             transform 420ms cubic-bezier(0.2, 0.8, 0.2, 1),
@@ -163,8 +176,8 @@ const sleeveKicker = project ?? creator ?? (tags[0] ? `#${tags[0]}` : 'Track');
         aspect-ratio: 1;
         border-radius: 999px;
         object-fit: cover;
-        opacity: 0.3;
-        filter: saturate(1.25) contrast(1.08) blur(18px);
+        opacity: var(--sleeve-art-opacity);
+        filter: var(--sleeve-art-filter);
         transform: rotate(7deg);
         transition:
             opacity 420ms ease,
@@ -173,11 +186,11 @@ const sleeveKicker = project ?? creator ?? (tags[0] ? `#${tags[0]}` : 'Track');
 
     .music-record__cover-stamp {
         position: absolute;
-        right: clamp(1.1rem, 2.8vw, 1.7rem);
+        right: var(--stamp-right);
         bottom: clamp(1rem, 2.4vw, 1.45rem);
         z-index: 1;
         display: block;
-        width: clamp(4rem, 13vw, 5.6rem);
+        width: var(--stamp-size);
         aspect-ratio: 1;
         overflow: hidden;
         border: 1px solid color-mix(in oklab, var(--text-main) 24%, transparent);
@@ -185,7 +198,7 @@ const sleeveKicker = project ?? creator ?? (tags[0] ? `#${tags[0]}` : 'Track');
         box-shadow:
             0 0.55rem 1.2rem color-mix(in oklab, var(--text-main) 15%, transparent),
             inset 0 0 0 1px color-mix(in oklab, white 30%, transparent);
-        opacity: 0.7;
+        opacity: var(--stamp-opacity);
         transform: rotate(2deg);
         transition:
             opacity 320ms ease,
@@ -196,6 +209,7 @@ const sleeveKicker = project ?? creator ?? (tags[0] ? `#${tags[0]}` : 'Track');
         width: 100%;
         height: 100%;
         object-fit: cover;
+        filter: var(--stamp-image-filter);
     }
 
     .music-record__meta-strip,
@@ -234,12 +248,17 @@ const sleeveKicker = project ?? creator ?? (tags[0] ? `#${tags[0]}` : 'Track');
         padding: clamp(1.15rem, 2.5vw, 1.65rem) clamp(1.2rem, 3vw, 1.9rem) 1rem;
     }
 
+    .music-record--with-cover .music-record__content {
+        padding-right: calc(clamp(1.2rem, 3vw, 1.9rem) + var(--stamp-size) + 0.85rem);
+    }
+
     .music-record__heading {
         display: flex;
         max-width: min(100%, 31rem);
         flex-wrap: wrap;
         align-items: baseline;
         gap: 0.25rem 0.5rem;
+        overflow-wrap: anywhere;
     }
 
     .music-record__title {
@@ -259,6 +278,7 @@ const sleeveKicker = project ?? creator ?? (tags[0] ? `#${tags[0]}` : 'Track');
     .music-record__date,
     .music-record__tags {
         color: color-mix(in oklab, var(--text-main) 68%, transparent);
+        overflow-wrap: anywhere;
     }
 
     .music-record__tags {
@@ -353,7 +373,7 @@ const sleeveKicker = project ?? creator ?? (tags[0] ? `#${tags[0]}` : 'Track');
         width: 100%;
         height: 100%;
         object-fit: cover;
-        filter: saturate(1.08) contrast(1.04);
+        filter: var(--label-art-filter);
     }
 
     .music-record__label-fallback {
@@ -378,18 +398,18 @@ const sleeveKicker = project ?? creator ?? (tags[0] ? `#${tags[0]}` : 'Track');
         border-color: color-mix(in oklab, var(--text-main) 26%, transparent);
         box-shadow:
             0 1.9rem 3.3rem -2.05rem color-mix(in oklab, var(--text-main) 32%, transparent),
-            inset 0 1px 0 color-mix(in oklab, white 52%, transparent),
-            inset -1.15rem 0 1.7rem -1.45rem color-mix(in oklab, var(--text-main) 50%, transparent);
+            inset 0 1px 0 var(--sleeve-highlight),
+            inset -1.15rem 0 1.7rem -1.45rem var(--sleeve-inset-shadow);
         transform: translateX(-0.12rem) rotate(-0.22deg);
     }
 
     .music-record:is(:hover, :focus-visible) .music-record__sleeve-art {
-        opacity: 0.38;
+        opacity: var(--sleeve-art-hover-opacity);
         transform: rotate(11deg) scale(1.05);
     }
 
     .music-record:is(:hover, :focus-visible) .music-record__cover-stamp {
-        opacity: 0.85;
+        opacity: var(--stamp-hover-opacity);
         transform: rotate(-1deg) translateY(-0.08rem);
     }
 
@@ -422,16 +442,59 @@ const sleeveKicker = project ?? creator ?? (tags[0] ? `#${tags[0]}` : 'Track');
         outline-offset: 4px;
     }
 
-    :global(html.dark) .music-record__sleeve-art,
-    :global(html.dark) .music-record__cover-stamp-image,
-    :global(html.dark) .music-record__label-art {
-        filter: brightness(0.78) saturate(1.1) contrast(1.08);
+    :global(html.dark) .music-record {
+        --paper-shadow: color-mix(in oklab, black 72%, transparent);
+        --paper-line: color-mix(in oklab, var(--text-main) 22%, transparent);
+        --sleeve-bg-base: color-mix(in oklab, var(--bg-muted) 86%, #2f3431);
+        --sleeve-bg-depth: color-mix(in oklab, var(--bg-main) 86%, #4d5148);
+        --sleeve-highlight: color-mix(in oklab, white 12%, transparent);
+        --sleeve-inset-shadow: color-mix(in oklab, black 48%, transparent);
+        --sleeve-art-opacity: 0.22;
+        --sleeve-art-hover-opacity: 0.32;
+        --sleeve-art-filter: brightness(0.68) saturate(1.18) contrast(1.14) blur(22px);
+        --stamp-opacity: 0.58;
+        --stamp-hover-opacity: 0.78;
+        --stamp-image-filter: brightness(0.78) saturate(1.08) contrast(1.1);
+        --label-art-filter: brightness(0.82) saturate(1.08) contrast(1.08);
+    }
+
+    :global(html.dark) .music-record__vinyl {
+        background:
+            radial-gradient(circle at 50% 50%, transparent 0 16.5%, color-mix(in oklab, #f6f5f1 88%, white) 16.9% 17.9%, transparent 18.4% 22%),
+            repeating-radial-gradient(circle at 50% 50%, #f8f8f4 0 0.12rem, #e2e1dc 0.13rem 0.18rem, #f2f1ec 0.19rem 0.32rem);
+        box-shadow:
+            0 1.85rem 2.9rem -1.45rem color-mix(in oklab, black 82%, transparent),
+            inset 0.22rem 0.22rem 0.7rem color-mix(in oklab, white 72%, transparent),
+            inset -0.55rem -0.7rem 1.05rem color-mix(in oklab, #9d9c95 45%, transparent);
+    }
+
+    :global(html.dark) .music-record__vinyl::before {
+        background:
+            conic-gradient(from 214deg, transparent 0deg 34deg, color-mix(in oklab, white 62%, transparent) 45deg, transparent 64deg 360deg),
+            linear-gradient(108deg, transparent 0 44%, color-mix(in oklab, white 54%, transparent) 48%, transparent 55% 100%);
+        mix-blend-mode: normal;
+        opacity: 0.42;
+    }
+
+    :global(html.dark) .music-record__vinyl::after {
+        border-color: color-mix(in oklab, #75736c 28%, transparent);
+        opacity: 0.62;
+    }
+
+    :global(html.dark) .music-record:is(:hover, :focus-visible) .music-record__vinyl {
+        box-shadow:
+            0 1.85rem 2.9rem -1.45rem color-mix(in oklab, black 86%, transparent),
+            inset 0.22rem 0.22rem 0.75rem color-mix(in oklab, white 80%, transparent),
+            inset -0.55rem -0.7rem 1.05rem color-mix(in oklab, #8b8a82 48%, transparent);
     }
 
     @media (max-width: 640px) {
         .music-record {
             --record-size: clamp(7.3rem, 43vw, 9.5rem);
             --sleeve-edge: 0.75rem;
+            --stamp-size: 4.25rem;
+            --sleeve-art-opacity: 0.22;
+            --stamp-opacity: 0.42;
             min-height: auto;
             padding-top: 0.15rem;
         }
@@ -456,17 +519,10 @@ const sleeveKicker = project ?? creator ?? (tags[0] ? `#${tags[0]}` : 'Track');
             top: -12%;
             right: -16%;
             width: 74%;
-            opacity: 0.22;
         }
 
-        .music-record__cover-stamp {
-            width: 4.25rem;
-            opacity: 0.42;
-        }
-
-        .music-record__heading,
-        .music-record__tags {
-            max-width: calc(100% - 4.7rem);
+        .music-record--with-cover .music-record__content {
+            padding-right: calc(1.2rem + var(--stamp-size) + 0.55rem);
         }
 
         .music-record__action {
