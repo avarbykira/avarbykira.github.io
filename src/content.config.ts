@@ -29,6 +29,14 @@ const contentDateSchema = z.union([z.string(), z.date()]).transform((value, ctx)
     }
 });
 
+const optionalStringSchema = z.preprocess((value) => {
+    if (value === null || value === undefined || value === '') {
+        return undefined;
+    }
+
+    return value;
+}, z.string().optional());
+
 const blog = defineCollection({
     loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/blog' }),
     schema: ({ image }) =>
@@ -66,4 +74,41 @@ const projects = defineCollection({
         })
 });
 
-export const collections = { blog, pages, projects };
+const music = defineCollection({
+    loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/music' }),
+    schema: ({ image }) =>
+        z.object({
+            title: z.string(),
+            publishDate: contentDateSchema,
+            updatedDate: contentDateSchema.optional(),
+            creator: optionalStringSchema,
+            isDraft: z.boolean().default(false),
+            cover: imageSchema(image).optional(),
+            audio: z.object({
+                src: z.string(),
+                type: z.string().optional(),
+                title: z.string().optional()
+            }),
+            info: z
+                .array(
+                    z.object({
+                        label: z.string(),
+                        text: z.string().optional(),
+                        href: z.string().optional(),
+                        links: z
+                            .array(
+                                z.object({
+                                    text: z.string(),
+                                    href: z.string()
+                                })
+                            )
+                            .optional()
+                    })
+                )
+                .default([]),
+            tags: z.array(z.string()).default([]),
+            seo: seoSchema(image).optional()
+        })
+});
+
+export const collections = { blog, pages, projects, music };

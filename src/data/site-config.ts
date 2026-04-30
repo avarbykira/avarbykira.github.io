@@ -30,6 +30,10 @@ const siteConfig: SiteConfig = {
             href: '/blog'
         },
         {
+            text: 'Music',
+            href: '/music'
+        },
+        {
             text: 'Tags',
             href: '/tags'
         }

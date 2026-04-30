@@ -1,0 +1,71 @@
+---
+import { type CollectionEntry } from 'astro:content';
+import ArrowRight from '../assets/icons/arrow-right.svg';
+import CustomImage from './CustomImage.astro';
+import FormattedDate from './FormattedDate.astro';
+
+type Props = { track: CollectionEntry<'music'>; class?: string; headingLevel?: 'h2' | 'h3' };
+
+const { track, class: className, headingLevel = 'h2' } = Astro.props;
+const { title, creator, publishDate, updatedDate, cover, tags = [] } = track.data;
+const TitleTag = headingLevel;
+---
+
+<a class:list={['group grid items-start gap-5', cover ? 'sm:grid-cols-[minmax(0,1fr)_7.5rem]' : 'sm:grid-cols-1', className]} href={`/music/${track.id}/`}>
+    <div class="min-w-0">
+        <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <TitleTag
+                class="font-serif text-xl leading-tight font-medium group-hover:underline group-hover:decoration-dashed group-hover:decoration-1 group-hover:underline-offset-4 sm:text-2xl"
+            >
+                {title}
+            </TitleTag>
+            {creator && <span class="font-serif text-lg leading-tight italic sm:text-xl">· {creator}</span>}
+        </div>
+        <div class="music-preview-date mt-2 text-sm leading-normal">
+            <FormattedDate date={publishDate} />
+            {
+                updatedDate && (
+                    <>
+                        {' '}
+                        <span>
+                            (Updated on <FormattedDate date={updatedDate} />)
+                        </span>
+                    </>
+                )
+            }
+        </div>
+        {
+            tags.length > 0 && (
+                <div class="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-xs uppercase">
+                    {tags.map((tag) => (
+                        <span>#{tag}</span>
+                    ))}
+                </div>
+            )
+        }
+        <div class="mt-5 hidden font-serif italic opacity-0 transition group-hover:opacity-100 sm:inline-flex sm:items-center sm:gap-1">
+            Listen <ArrowRight class="h-4 w-4 fill-current" />
+        </div>
+    </div>
+    {
+        cover && (
+            <CustomImage
+                src={cover.src}
+                alt={cover.alt ?? ''}
+                class="music-preview-cover aspect-square w-24 justify-self-start object-cover sm:w-full sm:justify-self-end"
+                widths={[160, 240, 320]}
+                sizes="(min-width: 640px) 120px, 96px"
+            />
+        )
+    }
+</a>
+
+<style>
+    .music-preview-date {
+        color: color-mix(in srgb, var(--text-main) 58%, transparent);
+    }
+
+    :global(html.dark) .music-preview-cover {
+        filter: brightness(0.78);
+    }
+</style>

@@ -1,0 +1,198 @@
+---
+import { type CollectionEntry, getCollection, render } from 'astro:content';
+import CustomImage from '../../components/CustomImage.astro';
+import FormattedDate from '../../components/FormattedDate.astro';
+import MusicPreview from '../../components/MusicPreview.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { sortItemsByDateDesc } from '../../utils/data-utils';
+
+export async function getStaticPaths() {
+    const tracks = (await getCollection('music')).filter((track) => !track.data.isDraft).sort(sortItemsByDateDesc);
+    const trackCount = tracks.length;
+    return tracks.map((track, index) => ({
+        params: { id: track.id },
+        props: {
+            track,
+            prevTrack: index + 1 !== trackCount ? tracks[index + 1] : null,
+            nextTrack: index !== 0 ? tracks[index - 1] : null
+        }
+    }));
+}
+
+type Props = {
+    track: CollectionEntry<'music'>;
+    prevTrack: CollectionEntry<'music'> | null;
+    nextTrack: CollectionEntry<'music'> | null;
+};
+
+const { track, prevTrack, nextTrack } = Astro.props;
+const { title, creator, publishDate, updatedDate, cover, audio, info = [], tags = [], seo } = track.data;
+const { Content } = await render(track);
+---
+
+<BaseLayout
+    title={seo?.title ?? title}
+    description={seo?.description ?? creator}
+    image={seo?.image ?? cover}
+    pageType="article"
+    showHeader={false}
+    mainClass="max-w-none"
+>
+    <article class="music-post">
+        <header class="music-header">
+            <div class="mb-4 text-sm">
+                <FormattedDate date={publishDate} />
+                {
+                    updatedDate && (
+                        <>
+                            {' '}
+                            <span>
+                                (Updated on <FormattedDate date={updatedDate} />)
+                            </span>
+                        </>
+                    )
+                }
+            </div>
+            <h1 class="font-serif text-3xl leading-tight font-medium sm:text-5xl sm:leading-tight">{title}</h1>
+            {creator && <p class="mt-6 max-w-2xl font-serif text-xl leading-snug italic sm:text-2xl">{creator}</p>}
+        </header>
+
+        <aside class="music-panel" aria-label="Track details">
+            <div>
+                {
+                    cover && (
+                        <CustomImage
+                            src={cover.src}
+                            alt={cover.alt ?? ''}
+                            class="music-cover mb-5 aspect-square w-full object-cover"
+                            widths={[320, 520, 680]}
+                            sizes="(min-width: 1024px) 340px, 100vw"
+                            loading="eager"
+                            fetchpriority="high"
+                        />
+                    )
+                }
+
+                <h2 class="mb-5 font-serif text-xl leading-tight font-medium">{audio.title ?? title}</h2>
+
+                <audio class="music-audio w-full" controls preload="metadata">
+                    <source src={audio.src} type={audio.type ?? 'audio/mpeg'} />
+                    Your browser does not support the audio element.
+                </audio>
+
+                <div class="music-player-separator"></div>
+
+                {
+                    info.length > 0 && (
+                        <dl class="music-info border-y text-base">
+                            {info.map((item) => (
+                                <div class="music-info-row grid grid-cols-[7rem_minmax(0,1fr)] gap-4 border-t py-3 first:border-t-0">
+                                    <dt class="font-serif italic">{item.label}</dt>
+                                    <dd class="leading-relaxed">
+                                        {item.links && item.links.length > 0 ? (
+                                            <span class="flex flex-wrap gap-x-3 gap-y-1">
+                                                {item.links.map((link) => (
+                                                    <a class="underline decoration-dashed decoration-1 underline-offset-2 hover:decoration-solid" href={link.href}>
+                                                        {link.text}
+                                                    </a>
+                                                ))}
+                                            </span>
+                                        ) : item.href && item.text ? (
+                                            <a class="underline decoration-dashed decoration-1 underline-offset-2 hover:decoration-solid" href={item.href}>
+                                                {item.text}
+                                            </a>
+                                        ) : (
+                                            item.text
+                                        )}
+                                    </dd>
+                                </div>
+                            ))}
+                        </dl>
+                    )
+                }
+
+                {
+                    tags.length > 0 && (
+                        <div class="mt-5 flex flex-wrap gap-x-4 gap-y-2 text-xs uppercase">
+                            {tags.map((tag) => (
+                                <span>#{tag}</span>
+                            ))}
+                        </div>
+                    )
+                }
+            </div>
+        </aside>
+
+        <div class="music-content prose sm:prose-lg max-w-none">
+            <Content />
+        </div>
+    </article>
+
+    {
+        (prevTrack || nextTrack) && (
+            <div class="my-16 sm:my-24">
+                <h2 class="mb-12 font-serif text-xl italic sm:mb-16 sm:text-2xl">Listen Next</h2>
+                {nextTrack && <MusicPreview track={nextTrack} class="mb-10 sm:mb-12" headingLevel="h3" />}
+                {prevTrack && <MusicPreview track={prevTrack} class="mb-10 sm:mb-12" headingLevel="h3" />}
+            </div>
+        )
+    }
+</BaseLayout>
+
+<style>
+    .music-post {
+        display: grid;
+        max-width: 48rem;
+        margin-inline: auto;
+        row-gap: 2.5rem;
+    }
+
+    .music-panel {
+        --audio-info-gap: 1.75rem;
+    }
+
+    .music-audio {
+        color-scheme: light;
+    }
+
+    .music-player-separator {
+        margin-block: var(--audio-info-gap);
+        border-top: 1px solid var(--border-main);
+    }
+
+    .music-info,
+    .music-info-row {
+        border-color: color-mix(in srgb, var(--border-main) 35%, transparent);
+    }
+
+    :global(html.dark) .music-audio {
+        color-scheme: dark;
+    }
+
+    :global(html.dark) .music-cover {
+        filter: brightness(0.78);
+    }
+
+    @media (min-width: 1180px) {
+        .music-post {
+            max-width: none;
+            margin-left: max(0px, calc((100% - 48rem) / 2));
+            margin-right: auto;
+            grid-template-columns: minmax(0, 40rem) 17.5rem;
+            column-gap: 3rem;
+        }
+
+        .music-panel {
+            position: sticky;
+            top: 2rem;
+            grid-column: 2;
+            grid-row: 1 / span 3;
+            align-self: start;
+        }
+
+        .music-header,
+        .music-content {
+            grid-column: 1;
+        }
+    }
+</style>
