@@ -7,7 +7,7 @@ import PostPreview from '../components/PostPreview.astro';
 import ProjectPreview from '../components/ProjectPreview.astro';
 import siteConfig from '../data/site-config';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { filterPublishedPosts, sortItemsByDateDesc } from '../utils/data-utils';
+import { filterPublishedPosts, filterPublishedProjects, sortItemsByDateDesc } from '../utils/data-utils';
 import Subscribe from '../components/Subscribe.astro';
 
 const posts = filterPublishedPosts(await getCollection('blog')).sort(sortItemsByDateDesc);
@@ -24,7 +24,7 @@ const latestPostContentPreview = latestPost
           .trim()
     : '';
 
-const projects = (await getCollection('projects')).sort(sortItemsByDateDesc);
+const projects = filterPublishedProjects(await getCollection('projects')).sort(sortItemsByDateDesc);
 const featuredProjects = projects.filter(({ data }) => data.isFeatured);
 ---
 
@@ -65,7 +65,7 @@ const featuredProjects = projects.filter(({ data }) => data.isFeatured);
     {
         featuredProjects?.length > 0 && (
             <div class="mb-16 sm:mb-24">
-                <h2 class="mb-12 font-serif text-xl italic sm:mb-16 sm:text-2xl">Projects</h2>
+                <h2 class="mb-12 font-serif text-xl italic sm:mb-16 sm:text-2xl">Ongoing Projects</h2>
                 {featuredProjects.map((project) => (
                     <ProjectPreview project={project} class="mb-10 sm:mb-12" headingLevel="h3" />
                 ))}

@@ -37,4 +37,5 @@ export type SiteConfig = {
     subscribe?: Subscribe;
     postsPerPage?: number;
     projectsPerPage?: number;
+    musicPerPage?: number;
 };

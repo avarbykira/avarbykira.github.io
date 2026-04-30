@@ -9,6 +9,10 @@ export function filterPublishedPosts(posts: CollectionEntry<'blog'>[]) {
     return posts.filter((post) => !post.data.is_draft);
 }
 
+export function filterPublishedProjects(projects: CollectionEntry<'projects'>[]) {
+    return projects.filter((project) => !project.data.isDraft && !project.data.is_draft);
+}
+
 export function getAllTags(posts: CollectionEntry<'blog'>[]) {
     const tags: string[] = [...new Set(posts.flatMap((post) => post.data.tags || []).filter(Boolean))];
     return tags

@@ -5,10 +5,10 @@ import Pagination from '../../components/Pagination.astro';
 import ProjectPreview from '../../components/ProjectPreview.astro';
 import siteConfig from '../../data/site-config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { sortItemsByDateDesc } from '../../utils/data-utils';
+import { filterPublishedProjects, sortItemsByDateDesc } from '../../utils/data-utils';
 
 export async function getStaticPaths({ paginate }: GetStaticPathsOptions) {
-    const projects = (await getCollection('projects')).sort(sortItemsByDateDesc);
+    const projects = filterPublishedProjects(await getCollection('projects')).sort(sortItemsByDateDesc);
     return paginate(projects, { pageSize: siteConfig.projectsPerPage || 6 });
 }
 

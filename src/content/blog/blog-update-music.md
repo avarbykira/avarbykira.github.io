@@ -1,5 +1,5 @@
 ---
-title: Blog 更新｜可以听歌咯
+title: Blog 基础设施更新｜可以听歌咯
 publishDate: '2026-04-30-15-00'
 excerpt: 新开了 Music 页面，还做了很好看的 UI！后面我会把歌曲慢慢发上来～
 isAiFree: true

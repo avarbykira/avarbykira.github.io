@@ -1,0 +1,31 @@
+---
+import type { GetStaticPathsOptions, Page } from 'astro';
+import { type CollectionEntry, getCollection } from 'astro:content';
+import MusicPreview from '../../components/MusicPreview.astro';
+import Pagination from '../../components/Pagination.astro';
+import siteConfig from '../../data/site-config';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { sortItemsByDateDesc } from '../../utils/data-utils';
+
+export async function getStaticPaths({ paginate }: GetStaticPathsOptions) {
+    const tracks = (await getCollection('music')).filter((track) => !track.data.isDraft).sort(sortItemsByDateDesc);
+    return paginate(tracks, { pageSize: siteConfig.musicPerPage || 6 });
+}
+
+type Props = { page: Page<CollectionEntry<'music'>> };
+
+const { page } = Astro.props;
+const tracks = page.data;
+---
+
+<BaseLayout title="Music" description="Arrangement, mixing, and music notes." showHeader={false}>
+    <h1 class="mb-12 font-serif text-2xl leading-tight italic sm:mb-16 sm:text-4xl">Music</h1>
+    {
+        tracks.length > 0 ? (
+            tracks.map((track) => <MusicPreview track={track} class="mb-10 sm:mb-12" />)
+        ) : (
+            <p class="max-w-xl text-sm leading-relaxed sm:text-base">Music notes and works will live here.</p>
+        )
+    }
+    <Pagination page={page} class="my-16 sm:my-24" />
+</BaseLayout>
