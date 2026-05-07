@@ -13,7 +13,7 @@ import Subscribe from '../components/Subscribe.astro';
 const posts = filterPublishedPosts(await getCollection('blog')).sort(sortItemsByDateDesc);
 const latestPost = posts[0];
 const featuredPosts = posts.filter(({ data }) => data.isFeatured);
-const latestPostContentPreview = latestPost
+const latestPostContentPreview = latestPost?.body
     ? latestPost.body
           .replace(/^---[\s\S]*?---/, '')
           .replace(/!\[.*?\]\(.*?\)/g, '')
