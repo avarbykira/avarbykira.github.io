@@ -1,5 +1,5 @@
 ---
-title: 我对AI的看法
+title: 我对 AI 的看法
 publishDate: 'Apr 18 2026'
 excerpt: 在这个AI能瞬间生成一切的时代，「亲手制作」反而变成了一种奢侈。
 tags:
