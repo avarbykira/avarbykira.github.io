@@ -6,11 +6,11 @@ export function sortItemsByDateDesc(itemA: CollectionEntry<'blog' | 'projects' |
 }
 
 export function filterPublishedPosts(posts: CollectionEntry<'blog'>[]) {
-    return posts.filter((post) => !post.data.is_draft);
+    return posts.filter((post) => !post.data.isDraft);
 }
 
 export function filterPublishedProjects(projects: CollectionEntry<'projects'>[]) {
-    return projects.filter((project) => !project.data.isDraft && !project.data.is_draft);
+    return projects.filter((project) => !project.data.isDraft);
 }
 
 export function getAllTags(posts: CollectionEntry<'blog'>[]) {
