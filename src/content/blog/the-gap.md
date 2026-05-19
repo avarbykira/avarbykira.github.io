@@ -79,6 +79,8 @@ Herbert 的建议是「[保持丰产](https://3quarksdaily.com/3quarksdaily/2026
 
 如果你有「马上去做」的建议，欢迎写邮件到 avarbykira@gmail.com 和我分享哦～
 
+*2025-05-19 补充：Herbert 今天又发了一篇关于「丰产了，之后呢」的文章，核心观点是要让别人记住你最满意的作品，链接在[这里](https://herbertlui.net/bloat/)。*
+
 ## 怎么跑题了
 
 好久没写这么长、这么多引用的文章了，好爽哦～
