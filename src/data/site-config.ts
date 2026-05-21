@@ -1,7 +1,7 @@
 import type { SiteConfig } from '../types';
 
 const siteConfig: SiteConfig = {
-    website: 'https://avarbykira.github.io',
+    website: 'https://www.tcli.me',
     title: '水母公园 Jellypark',
     subtitle: '在不易发现的浅滩之上，水母正慢慢伸展触角。',
     description: '在不易发现的浅滩上，水母在这里伸展触角。',
