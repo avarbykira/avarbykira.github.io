@@ -1,5 +1,5 @@
 ---
-title: 家园建造记录
+title: 水母公园施工记录
 publishDate: '2026-04-30-14-00'
 description: 这里记录了这个博客本身每次更新的内容，如果你好奇博客是怎么一步步变成现在的样子的，就来看看吧！
 isFeatured: true
