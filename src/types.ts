@@ -38,4 +38,5 @@ export type SiteConfig = {
     postsPerPage?: number;
     projectsPerPage?: number;
     musicPerPage?: number;
+    galleryImagesPerPage?: number;
 };

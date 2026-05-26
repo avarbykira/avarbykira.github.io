@@ -1,0 +1,161 @@
+---
+import { type CollectionEntry, getCollection, render } from 'astro:content';
+import { marked } from 'marked';
+import Button from '../../components/Button.astro';
+import CustomImage from '../../components/CustomImage.astro';
+import FormattedDate from '../../components/FormattedDate.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { filterPublishedGalleries, sortItemsByDateDesc } from '../../utils/data-utils';
+import { getGalleryPhotoAnchor } from '../../utils/gallery-utils';
+
+export async function getStaticPaths() {
+    const galleries = filterPublishedGalleries(await getCollection('gallery')).sort(sortItemsByDateDesc);
+
+    return galleries.map((gallery) => ({
+        params: { id: gallery.id },
+        props: { gallery }
+    }));
+}
+
+type Props = { gallery: CollectionEntry<'gallery'> };
+
+const { href } = Astro.url;
+const { gallery } = Astro.props;
+const { title, publishDate, updatedDate, excerpt, photos = [], tags = [], seo } = gallery.data;
+const { Content } = await render(gallery);
+const renderCaption = (caption: string) => marked.parseInline(caption, { async: false });
+const pageImage = seo?.image ?? (photos[0] ? { src: photos[0].src, alt: photos[0].alt } : undefined);
+---
+
+<BaseLayout title={seo?.title ?? title} description={seo?.description ?? excerpt} image={pageImage} pageType="article" showHeader={false}>
+    <article class="mb-16 sm:mb-24">
+        <header class="mb-8">
+            <h1 class="font-serif text-3xl leading-tight font-medium sm:text-5xl sm:leading-tight">{title}</h1>
+            <div class="mt-4 text-sm">
+                <FormattedDate date={publishDate} />
+                {
+                    updatedDate && (
+                        <>
+                            {' '}
+                            <span>
+                                (Updated on <FormattedDate date={updatedDate} />)
+                            </span>
+                        </>
+                    )
+                }
+            </div>
+        </header>
+
+        {
+            photos.length > 0 && (
+                <div class="gallery-photos">
+                    {photos.map((photo, index) => {
+                        const anchor = getGalleryPhotoAnchor(photo, index);
+
+                        return (
+                            <figure id={anchor} class="gallery-photo scroll-mt-8">
+                                <CustomImage
+                                    src={photo.src}
+                                    alt={photo.alt ?? ''}
+                                    class="gallery-photo__image"
+                                    widths={[640, 960, 1280, 1600]}
+                                    sizes="(min-width: 768px) 768px, 100vw"
+                                    loading={index === 0 ? 'eager' : 'lazy'}
+                                    fetchpriority={index === 0 ? 'high' : 'auto'}
+                                />
+                                {photo.caption && <figcaption class="gallery-photo__caption" set:html={renderCaption(photo.caption)} />}
+                            </figure>
+                        );
+                    })}
+                </div>
+            )
+        }
+
+        <div class:list={['prose sm:prose-lg max-w-none', photos.length > 0 && 'mt-12 sm:mt-16']}>
+            <Content />
+        </div>
+
+        <footer class="mt-10 sm:mt-15">
+            <div class="border-main/20 flex flex-wrap items-center justify-between gap-6 border-t pt-8 text-sm sm:pt-8 sm:text-base">
+                {
+                    tags.length > 0 && (
+                        <div class="flex flex-wrap gap-x-5 gap-y-1 text-sm">
+                            {tags.map((tag) => (
+                                <span>#{tag}</span>
+                            ))}
+                        </div>
+                    )
+                }
+                <Button class="copy-url-button" aria-label="Copy link" data-url={href} data-tooltip-default="Copy link" data-tooltip-success="Copied">
+                    Share
+                </Button>
+            </div>
+        </footer>
+    </article>
+</BaseLayout>
+
+<style>
+    .gallery-photos {
+        display: grid;
+        gap: 2.5rem;
+    }
+
+    .gallery-photo {
+        width: min(100%, 40rem);
+        margin: 0;
+        margin-inline: auto;
+    }
+
+    .gallery-photo__image {
+        width: 100%;
+        height: auto;
+        max-height: min(68vh, 44rem);
+        object-fit: contain;
+        background: color-mix(in oklab, var(--bg-muted) 86%, var(--text-main));
+    }
+
+    .gallery-photo__caption {
+        margin-top: 0.65rem;
+        color: color-mix(in oklab, var(--text-main) 72%, transparent);
+        font-size: 0.92rem;
+        line-height: 1.7;
+        text-align: center;
+    }
+
+    :global(.gallery-photo__caption a) {
+        text-decoration-line: underline;
+        text-decoration-style: dashed;
+        text-decoration-thickness: 1px;
+        text-underline-offset: 2px;
+    }
+
+    :global(.gallery-photo__caption a:hover) {
+        text-decoration-style: solid;
+    }
+
+    :global(html.dark) .gallery-photo__image {
+        filter: brightness(0.82);
+    }
+</style>
+
+<script>
+    document.addEventListener('astro:page-load', () => {
+        const copyUrlButton = document.querySelector('.copy-url-button') as HTMLButtonElement;
+        copyUrlButton?.addEventListener('click', async () => {
+            await copyUrl(copyUrlButton);
+        });
+
+        async function copyUrl(button: HTMLButtonElement) {
+            let url = button.getAttribute('data-url') || '';
+            let label = button.innerText;
+
+            await navigator.clipboard.writeText(url);
+
+            button.innerText = 'Copied';
+
+            setTimeout(() => {
+                button.innerText = label;
+            }, 2500);
+        }
+    });
+</script>

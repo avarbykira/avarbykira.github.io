@@ -113,4 +113,27 @@ const music = defineCollection({
         })
 });
 
-export const collections = { blog, pages, projects, music };
+const gallery = defineCollection({
+    loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/gallery' }),
+    schema: ({ image }) =>
+        z.object({
+            title: z.string(),
+            excerpt: z.string().optional(),
+            publishDate: contentDateSchema,
+            updatedDate: contentDateSchema.optional(),
+            isDraft: z.boolean().default(false),
+            photos: z
+                .array(
+                    z.object({
+                        src: image(),
+                        alt: z.string().optional(),
+                        caption: z.string().optional()
+                    })
+                )
+                .default([]),
+            tags: z.array(z.string()).default([]),
+            seo: seoSchema(image).optional()
+        })
+});
+
+export const collections = { blog, pages, projects, music, gallery };

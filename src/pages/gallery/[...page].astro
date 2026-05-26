@@ -1,0 +1,140 @@
+---
+import type { GetStaticPathsOptions, Page } from 'astro';
+import CustomImage from '../../components/CustomImage.astro';
+import FormattedDate from '../../components/FormattedDate.astro';
+import Pagination from '../../components/Pagination.astro';
+import siteConfig from '../../data/site-config';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { filterPublishedGalleries, sortItemsByDateDesc } from '../../utils/data-utils';
+import { getGalleryPhotoItems, type GalleryPhotoItem } from '../../utils/gallery-utils';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths({ paginate }: GetStaticPathsOptions) {
+    const galleries = filterPublishedGalleries(await getCollection('gallery')).sort(sortItemsByDateDesc);
+    const photos = getGalleryPhotoItems(galleries);
+
+    return paginate(photos, { pageSize: siteConfig.galleryImagesPerPage || 24 });
+}
+
+type Props = { page: Page<GalleryPhotoItem> };
+
+const { page } = Astro.props;
+const photos = page.data;
+---
+
+<BaseLayout title="Gallery" description="Photos and image notes." showHeader={false}>
+    <h1 class="mb-8 font-serif text-2xl leading-tight italic sm:mb-12 sm:text-4xl">Gallery</h1>
+
+    {
+        photos.length > 0 ? (
+            <div class="gallery-grid">
+                {photos.map(({ gallery, photo, anchor, href }, index) => (
+                    <a class="gallery-tile group" href={href} aria-label={`${gallery.data.title}: ${photo.alt ?? photo.caption ?? anchor}`}>
+                        <CustomImage
+                            src={photo.src}
+                            alt={photo.alt ?? ''}
+                            class="gallery-tile__image"
+                            widths={[240, 360, 520]}
+                            sizes="(min-width: 768px) 240px, 33vw"
+                            loading={index < 9 ? 'eager' : 'lazy'}
+                            fetchpriority={index === 0 ? 'high' : 'auto'}
+                        />
+                        <span class="gallery-tile__meta">
+                            <span class="gallery-tile__title">{gallery.data.title}</span>
+                            <span class="gallery-tile__date">
+                                <FormattedDate date={gallery.data.publishDate} />
+                            </span>
+                        </span>
+                    </a>
+                ))}
+            </div>
+        ) : (
+            <p class="max-w-xl text-sm leading-relaxed sm:text-base">Gallery photos will live here.</p>
+        )
+    }
+
+    <Pagination page={page} class="my-16 sm:my-24" />
+</BaseLayout>
+
+<style>
+    .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: clamp(0.25rem, 1.5vw, 0.75rem);
+    }
+
+    .gallery-tile {
+        position: relative;
+        display: block;
+        aspect-ratio: 1;
+        overflow: hidden;
+        background: color-mix(in oklab, var(--bg-muted) 88%, var(--text-main));
+        color: white;
+        outline: none;
+    }
+
+    .gallery-tile__image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition:
+            filter 260ms ease,
+            scale 360ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .gallery-tile__meta {
+        position: absolute;
+        inset: auto 0 0;
+        display: flex;
+        min-height: 42%;
+        flex-direction: column;
+        justify-content: flex-end;
+        gap: 0.2rem;
+        padding: clamp(0.45rem, 1.5vw, 0.8rem);
+        background: linear-gradient(180deg, transparent, rgb(0 0 0 / 0.62));
+        opacity: 0;
+        transition: opacity 220ms ease;
+    }
+
+    .gallery-tile__title,
+    .gallery-tile__date {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .gallery-tile__title {
+        font-family: var(--font-serif);
+        font-size: clamp(0.8rem, 1.8vw, 1rem);
+        line-height: 1.2;
+    }
+
+    .gallery-tile__date {
+        font-size: clamp(0.66rem, 1.4vw, 0.76rem);
+        line-height: 1.2;
+        opacity: 0.84;
+    }
+
+    .gallery-tile:is(:hover, :focus-visible) .gallery-tile__image {
+        filter: brightness(0.82) saturate(1.04);
+        scale: 1.025;
+    }
+
+    .gallery-tile:is(:hover, :focus-visible) .gallery-tile__meta {
+        opacity: 1;
+    }
+
+    :global(html.dark) .gallery-tile__image {
+        filter: brightness(0.86);
+    }
+
+    :global(html.dark) .gallery-tile:is(:hover, :focus-visible) .gallery-tile__image {
+        filter: brightness(0.7) saturate(1.04);
+    }
+
+    @media (max-width: 639px) {
+        .gallery-tile__meta {
+            display: none;
+        }
+    }
+</style>

@@ -1,7 +1,10 @@
 import { type CollectionEntry } from 'astro:content';
 import { slugify } from './common-utils';
 
-export function sortItemsByDateDesc(itemA: CollectionEntry<'blog' | 'projects' | 'music'>, itemB: CollectionEntry<'blog' | 'projects' | 'music'>) {
+export function sortItemsByDateDesc(
+    itemA: CollectionEntry<'blog' | 'projects' | 'music' | 'gallery'>,
+    itemB: CollectionEntry<'blog' | 'projects' | 'music' | 'gallery'>
+) {
     return new Date(itemB.data.publishDate).getTime() - new Date(itemA.data.publishDate).getTime();
 }
 
@@ -11,6 +14,10 @@ export function filterPublishedPosts(posts: CollectionEntry<'blog'>[]) {
 
 export function filterPublishedProjects(projects: CollectionEntry<'projects'>[]) {
     return projects.filter((project) => !project.data.isDraft);
+}
+
+export function filterPublishedGalleries(galleries: CollectionEntry<'gallery'>[]) {
+    return galleries.filter((gallery) => !gallery.data.isDraft);
 }
 
 export function getAllTags(posts: CollectionEntry<'blog'>[]) {

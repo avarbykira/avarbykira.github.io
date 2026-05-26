@@ -23,6 +23,10 @@ const siteConfig: SiteConfig = {
             href: '/music'
         },
         {
+            text: 'Gallery',
+            href: '/gallery'
+        },
+        {
             text: 'Tags',
             href: '/tags'
         }
@@ -55,7 +59,8 @@ const siteConfig: SiteConfig = {
     },
     postsPerPage: 8,
     projectsPerPage: 8,
-    musicPerPage: 8
+    musicPerPage: 8,
+    galleryImagesPerPage: 24
 };
 
 export default siteConfig;
