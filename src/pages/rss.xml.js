@@ -1,20 +1,39 @@
 import rss from '@astrojs/rss';
 import { getCollection } from 'astro:content';
-import { marked } from 'marked';
+import { statSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { marked, Renderer } from 'marked';
 import siteConfig from '../data/site-config.ts';
-import { filterPublishedGalleries, filterPublishedPosts, sortItemsByDateDesc } from '../utils/data-utils.ts';
+import aiFreeMarkdown from '../data/rss/ai-free.md?raw';
+import footerMarkdown from '../data/rss/footer.md?raw';
+import { filterPublishedGalleries, filterPublishedMusic, filterPublishedPosts, sortItemsByDateDesc } from '../utils/data-utils.ts';
 
-const aiFreeBlock = `
+function getFeedRenderer(site) {
+    const renderer = new Renderer();
+    const defaultLinkRenderer = renderer.link.bind(renderer);
+    const defaultImageRenderer = renderer.image.bind(renderer);
+
+    renderer.link = (token) => defaultLinkRenderer({ ...token, href: new URL(token.href, site).href });
+    renderer.image = (token) => defaultImageRenderer({ ...token, href: new URL(token.href, site).href });
+
+    return renderer;
+}
+
+function renderMarkdown(markdown, site) {
+    return marked.parse(markdown.trim(), { async: false, renderer: getFeedRenderer(site) });
+}
+
+function getAiFreeBlock(site) {
+    return `
 <blockquote style="margin: 2rem 0 1.25rem; padding: 0 0 0 1rem; border-left: 3px solid #d8d8d8; color: #777; font-size: 0.95rem; line-height: 1.75; text-align: left;">
-    <p style="margin: 0;"><strong style="color: #666;">This post is AI FREE. </strong> 本文未经 AI 生成或润色，每个字都由我亲手敲下。</p>
+    ${renderMarkdown(aiFreeMarkdown, site)}
 </blockquote>`;
+}
 
 function getWebNote(site) {
-    const blogUrl = new URL('/', site).href;
-
     return `
 <aside style="margin: 1.5rem 0 0; padding: 1rem 0 0; border-top: 1px solid #dedede; color: #777; font-size: 0.95rem; line-height: 1.8; text-align: left;">
-    如果你喜欢这篇文章，不妨来<a href="${blogUrl}" style="color: #666; text-decoration: underline;">水母公园</a>散散步。小径和长椅都由我亲手摆放，沿途没准还能遇见我做的歌，以及一些只在网页里开放的小角落。
+    ${renderMarkdown(footerMarkdown, site)}
 </aside>`;
 }
 
@@ -48,16 +67,61 @@ function getGalleryFigures(item, site) {
         .join('');
 }
 
+function getMusicMedia(item, site) {
+    const cover = item.data.cover
+        ? `
+<figure>
+    <img src="${new URL(item.data.cover.src.src, site).href}" alt="${escapeHtml(item.data.cover.alt ?? '')}" />
+</figure>`
+        : '';
+    const audioUrl = new URL(item.data.audio.src, site).href;
+    const audioTitle = item.data.audio.title ?? item.data.title;
+
+    return `
+${cover}
+<p><a href="${audioUrl}">Listen: ${escapeHtml(audioTitle)}</a></p>
+<audio controls preload="metadata" src="${audioUrl}"></audio>`;
+}
+
+function getAudioEnclosure(item) {
+    const { audio } = item.data;
+
+    if (!audio.src.startsWith('/')) {
+        return undefined;
+    }
+
+    try {
+        const audioPath = fileURLToPath(new URL(`../../public${audio.src}`, import.meta.url));
+        return {
+            url: audio.src,
+            length: statSync(audioPath).size,
+            type: audio.type ?? 'audio/mpeg'
+        };
+    } catch {
+        return undefined;
+    }
+}
+
 export async function GET(context) {
     const posts = filterPublishedPosts(await getCollection('blog')).sort(sortItemsByDateDesc);
+    const tracks = filterPublishedMusic(await getCollection('music')).sort(sortItemsByDateDesc);
     const galleries = filterPublishedGalleries(await getCollection('gallery')).sort(sortItemsByDateDesc);
     const items = [
         ...posts.map((item) => ({
             title: item.data.title,
             description: item.data.excerpt,
-            content: [marked.parse(item.body), item.data.isAiFree ? aiFreeBlock : '', getWebNote(context.site)].join(''),
+            content: [marked.parse(item.body), item.data.isAiFree ? getAiFreeBlock(context.site) : '', getWebNote(context.site)].join(''),
             link: `/blog/${item.id}/`,
             pubDate: item.data.publishDate
+        })),
+        ...tracks.map((item) => ({
+            title: item.data.creator ? `${item.data.title} - ${item.data.creator}` : item.data.title,
+            description: item.data.project ?? item.data.creator,
+            content: [getMusicMedia(item, context.site), marked.parse(item.body), getWebNote(context.site)].join(''),
+            link: `/music/${item.id}/`,
+            pubDate: item.data.publishDate,
+            categories: item.data.tags,
+            enclosure: getAudioEnclosure(item)
         })),
         ...galleries.map((item) => ({
             title: item.data.title,

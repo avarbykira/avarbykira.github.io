@@ -16,6 +16,10 @@ export function filterPublishedProjects(projects: CollectionEntry<'projects'>[])
     return projects.filter((project) => !project.data.isDraft);
 }
 
+export function filterPublishedMusic(tracks: CollectionEntry<'music'>[]) {
+    return tracks.filter((track) => !track.data.isDraft);
+}
+
 export function filterPublishedGalleries(galleries: CollectionEntry<'gallery'>[]) {
     return galleries.filter((gallery) => !gallery.data.isDraft);
 }
