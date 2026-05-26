@@ -60,7 +60,7 @@ whisper-cli \
 
 我想到了驱使我读博客、写博客的原因：废话太多，AI slop 太多。也许，我可以把播客变成文字来读。
 
-Wiwi 曾经强烈推荐过 [yt-dlp](https://github.com/yt-dlp/yt-dlp) 这个下载工具。下载完成后，只需要再用本地模型完成语音转文字即可。做了一些搜索之后，我发现了 [whisper-cpp](https://github.com/ggml-org/whisper.cpp)。
+[Wiwi 曾经强烈推荐过](https://wiwi.blog/use/) [yt-dlp](https://github.com/yt-dlp/yt-dlp) 这个下载工具。下载完成后，只需要再用本地模型完成语音转文字即可。做了一些搜索之后，我发现了 [whisper-cpp](https://github.com/ggml-org/whisper.cpp)。
 
 整个配置过程其实不算复杂，跟着教程一步步来就好。如果你有一些编码经验，或者习惯 terminal UI 的交互方式，应该很快就能上手。
 
