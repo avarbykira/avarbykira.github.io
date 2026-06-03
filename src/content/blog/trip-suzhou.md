@@ -7,7 +7,7 @@ tags:
 - life
 isFeatured: false
 isAiFree: true
-# isDraft: true
+isDraft: true
 ---
 
 上周末，我心血来潮想去苏州逛一圈。上次一个人旅游还是2024年9月在悉尼，这次很难说有和当时同样的苦闷，但总觉得一个人出去转转有助于心理健康。出行前的几天，仍偶尔有一些抵触的想法冒出来，不过最终还是如期踏上了旅途。
