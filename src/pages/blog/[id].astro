@@ -24,65 +24,103 @@ export async function getStaticPaths() {
     }));
 }
 
-type Props = { post: CollectionEntry<'blog'>; prevPost: CollectionEntry<'blog'>; nextPost: CollectionEntry<'blog'> };
+type Props = { post: CollectionEntry<'blog'>; prevPost: CollectionEntry<'blog'> | null; nextPost: CollectionEntry<'blog'> | null };
 
 const { href } = Astro.url;
 const { post, prevPost, nextPost } = Astro.props;
 const { title, publishDate, updatedDate, excerpt, tags = [], seo, isAiFree } = post.data;
-const { Content } = await render(post);
+const { Content, headings } = await render(post);
+const tableOfContents = headings.filter((heading) => heading.depth <= 4);
+const minHeadingDepth = Math.min(...tableOfContents.map((heading) => heading.depth));
 ---
 
-<BaseLayout title={seo?.title ?? title} description={seo?.description ?? excerpt} image={seo?.image} pageType="article" showHeader={false}>
-     <article class="mb-16 sm:mb-24">
-        <header class="mb-8">
-            <h1 class="font-serif text-3xl leading-tight font-medium sm:text-5xl sm:leading-tight">{title}</h1>
-            <div class="mt-4 text-sm">
-                <FormattedDate date={publishDate} />
-                {
-                    updatedDate && (
-                        <>
-                            {' '}
-                            <span>
-                                (Updated on <FormattedDate date={updatedDate} />)
-                            </span>
-                        </>
-                    )
-                }
-            </div>
-        </header>
-        <div class="prose sm:prose-lg max-w-none">
-            <Content />
+<BaseLayout
+    title={seo?.title ?? title}
+    description={seo?.description ?? excerpt}
+    image={seo?.image}
+    pageType="article"
+    showHeader={false}
+    mainClass="max-w-7xl"
+>
+    <div class="blog-post-layout">
+        <div class="mx-auto max-w-3xl">
+            <article class="mb-16 sm:mb-24">
+                <header class="mb-8">
+                    <h1 class="font-serif text-3xl leading-tight font-medium sm:text-5xl sm:leading-tight">{title}</h1>
+                    <div class="mt-4 text-sm">
+                        <FormattedDate date={publishDate} />
+                        {
+                            updatedDate && (
+                                <>
+                                    {' '}
+                                    <span>
+                                        (Updated on <FormattedDate date={updatedDate} />)
+                                    </span>
+                                </>
+                            )
+                        }
+                    </div>
+                </header>
+                <div class="prose sm:prose-lg max-w-none">
+                    <Content />
+                </div>
+                <footer class="mt-10 sm:mt-15">
+                    {isAiFree && <AiFreeCard class="mb-12 sm:mb-15" />}
+                    <div class="border-main/20 flex flex-wrap items-center justify-between gap-6 border-t pt-8 text-sm sm:pt-8 sm:text-base">
+                        {
+                            tags.length > 0 && (
+                                <div class="flex flex-wrap gap-x-5 gap-y-1 text-sm">
+                                    {tags.map((tag) => (
+                                        <a class="text-main hover:underline" href={`/tags/${slugify(tag)}`}>
+                                            #{tag}
+                                        </a>
+                                    ))}
+                                </div>
+                            )
+                        }
+                        <Button class="copy-url-button" aria-label="Copy link" data-url={href} data-tooltip-default="Copy link" data-tooltip-success="Copied">
+                            Share
+                        </Button>
+                    </div>
+                </footer>
+            </article>
+            {
+                (prevPost || nextPost) && (
+                    <div class="my-16 sm:my-24">
+                        <h2 class="mb-12 font-serif text-xl italic sm:mb-16 sm:text-2xl">Read Next</h2>
+                        {nextPost && <PostPreview post={nextPost} class="mb-10 sm:mb-12" headingLevel="h3" />}
+                        {prevPost && <PostPreview post={prevPost} class="mb-10 sm:mb-12" headingLevel="h3" />}
+                    </div>
+                )
+            }
+            <Subscribe class="my-16 sm:my-24" />
         </div>
-        <footer class="mt-10 sm:mt-15">
-            {isAiFree && <AiFreeCard class="mb-12 sm:mb-15" />}
-            <div class="border-main/20 flex flex-wrap items-center justify-between gap-6 border-t pt-8 text-sm sm:pt-8 sm:text-base">
-                {
-                    tags.length > 0 && (
-                        <div class="flex flex-wrap gap-x-5 gap-y-1 text-sm">
-                            {tags.map((tag) => (
-                                <a class="text-main hover:underline" href={`/tags/${slugify(tag)}`}>
-                                    #{tag}
-                                </a>
-                            ))}
+        {
+            tableOfContents.length > 0 && (
+                <aside class="blog-table-of-contents" data-collapsed="false">
+                    <nav aria-labelledby="table-of-contents-heading">
+                        <div class="toc-header">
+                            <h2 id="table-of-contents-heading">目录</h2>
+                            <button class="toc-toggle" type="button" aria-expanded="true" aria-controls="table-of-contents-list" aria-label="收起目录">
+                                <span class="toc-toggle-icon" aria-hidden="true" />
+                            </button>
                         </div>
-                    )
-                }
-                <Button class="copy-url-button" aria-label="Copy link" data-url={href} data-tooltip-default="Copy link" data-tooltip-success="Copied">
-                    Share
-                </Button>
-            </div>
-        </footer>
-    </article>
-    {
-        (prevPost || nextPost) && (
-            <div class="my-16 sm:my-24">
-                <h2 class="mb-12 font-serif text-xl italic sm:mb-16 sm:text-2xl">Read Next</h2>
-                {nextPost && <PostPreview post={nextPost} class="mb-10 sm:mb-12" headingLevel="h3" />}
-                {prevPost && <PostPreview post={prevPost} class="mb-10 sm:mb-12" headingLevel="h3" />}
-            </div>
-        )
-    }
-    <Subscribe class="my-16 sm:my-24" />
+                        <div class="toc-body" id="table-of-contents-list">
+                            <div class="toc-body-inner">
+                                <ol>
+                                    {tableOfContents.map((heading) => (
+                                        <li style={`--toc-indent: ${heading.depth - minHeadingDepth}`}>
+                                            <a href={`#${heading.slug}`}>{heading.text}</a>
+                                        </li>
+                                    ))}
+                                </ol>
+                            </div>
+                        </div>
+                    </nav>
+                </aside>
+            )
+        }
+    </div>
 </BaseLayout>
 
 <script>
@@ -104,5 +142,179 @@ const { Content } = await render(post);
                 button.innerText = label;
             }, 2500);
         }
+
+        const tableOfContents = document.querySelector('.blog-table-of-contents') as HTMLElement | null;
+        const tocToggleButton = tableOfContents?.querySelector('.toc-toggle') as HTMLButtonElement | null;
+
+        if (tableOfContents && tocToggleButton && !tocToggleButton.dataset.initialized) {
+            tocToggleButton.dataset.initialized = 'true';
+
+            const setTocCollapsed = (isCollapsed: boolean) => {
+                tableOfContents.dataset.collapsed = String(isCollapsed);
+                tocToggleButton.setAttribute('aria-expanded', String(!isCollapsed));
+                tocToggleButton.setAttribute('aria-label', isCollapsed ? '展开目录' : '收起目录');
+            };
+
+            tocToggleButton.addEventListener('click', () => {
+                setTocCollapsed(tableOfContents.dataset.collapsed !== 'true');
+            });
+        }
     });
 </script>
+
+<style>
+    .blog-post-layout {
+        position: relative;
+    }
+
+    .blog-table-of-contents {
+        display: none;
+    }
+
+    @media (min-width: 1280px) {
+        .blog-table-of-contents {
+            display: block;
+            position: fixed;
+            z-index: 20;
+            top: clamp(5rem, 12vh, 7rem);
+            left: calc(50% + 27rem);
+            width: 12.5rem;
+            font-family: var(--font-serif);
+            font-optical-sizing: auto;
+        }
+
+        .blog-table-of-contents nav {
+            overflow: hidden;
+            max-height: calc(100vh - 8rem);
+            padding-left: 1rem;
+            border-left: 1px solid color-mix(in srgb, var(--border-color-main) 22%, transparent);
+        }
+
+        .toc-header {
+            display: flex;
+            min-height: 1.7rem;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.6rem;
+        }
+
+        .blog-table-of-contents h2 {
+            overflow: hidden;
+            margin: 0;
+            font-size: 0.95rem;
+            font-weight: 650;
+            font-style: normal;
+            line-height: 1.2;
+            white-space: nowrap;
+            opacity: 1;
+        }
+
+        .toc-toggle {
+            display: inline-flex;
+            width: 1.65rem;
+            height: 1.65rem;
+            flex: 0 0 1.65rem;
+            align-items: center;
+            justify-content: center;
+            border: 0;
+            border-radius: 999px;
+            color: color-mix(in srgb, var(--text-color-main) 64%, transparent);
+            background: color-mix(in srgb, var(--background-color-main) 92%, transparent);
+            box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border-color-main) 18%, transparent);
+            cursor: pointer;
+            transition:
+                color 160ms ease,
+                background-color 160ms ease,
+                box-shadow 160ms ease;
+        }
+
+        .toc-toggle:hover {
+            color: var(--text-color-main);
+            background: var(--background-color-muted);
+            box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border-color-main) 34%, transparent);
+        }
+
+        .toc-toggle:focus-visible {
+            outline: 2px solid var(--border-color-main);
+            outline-offset: 3px;
+        }
+
+        .toc-toggle-icon {
+            width: 0.42rem;
+            height: 0.42rem;
+            border-right: 1.35px solid currentColor;
+            border-bottom: 1.35px solid currentColor;
+            transform: translateX(-0.06rem) rotate(-45deg);
+            transition: transform 180ms cubic-bezier(0.2, 0, 0, 1);
+        }
+
+        .toc-body {
+            display: grid;
+            grid-template-rows: 1fr;
+            opacity: 1;
+            transform: translateY(0);
+            transition:
+                grid-template-rows 180ms cubic-bezier(0.2, 0, 0, 1),
+                opacity 140ms ease,
+                transform 180ms cubic-bezier(0.2, 0, 0, 1);
+        }
+
+        .toc-body-inner {
+            min-height: 0;
+            overflow: auto;
+        }
+
+        .blog-table-of-contents ol {
+            display: grid;
+            gap: 0.58rem;
+            margin: 0.9rem 0 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .blog-table-of-contents li {
+            margin: 0;
+            padding-left: calc(var(--toc-indent) * 0.85rem);
+        }
+
+        .blog-table-of-contents a {
+            display: block;
+            color: color-mix(in srgb, var(--text-color-main) 72%, transparent);
+            font-size: 0.9rem;
+            font-weight: 420;
+            line-height: 1.32;
+            text-decoration: none;
+            transition: color 150ms ease;
+        }
+
+        .blog-table-of-contents a:hover {
+            color: var(--text-color-main);
+            text-decoration: underline;
+            text-decoration-style: dashed;
+            text-underline-offset: 0.18em;
+        }
+
+        .blog-table-of-contents[data-collapsed='true'] .toc-toggle-icon {
+            transform: translateX(0.06rem) rotate(135deg);
+        }
+
+        .blog-table-of-contents[data-collapsed='true'] .toc-body {
+            grid-template-rows: 0fr;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-0.25rem);
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .blog-table-of-contents,
+        .blog-table-of-contents nav,
+        .blog-table-of-contents h2,
+        .toc-toggle,
+        .toc-toggle-icon,
+        .toc-body,
+        .toc-body-inner {
+            transition-duration: 1ms;
+        }
+    }
+</style>
