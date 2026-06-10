@@ -5,10 +5,6 @@ excerpt: 昨天还觉得自己超健康，今天早上就在食堂破了戒。�
 tags:
 - thoughts
 isFeatured: false
-# seo:
-#   image:
-#     src: '../../assets/images/post-1.jpg'
-#     alt: A person standing at the window
 ---
 
 最近有点胖得不像话了，正在通过控制食量、增加锻炼的方式来控制一下体重。

@@ -3,9 +3,6 @@ title: 关于我
 seo:
   title: About Me
   description: Learn more about the person behind the website and embark on a journey of inspiration and shared experiences.
-  # image:
-  #   src: '../../assets/images/about.jpg'
-  #   alt: A person sitting at a desk in front of a computer
 ---
 
 *最后更新时间：2026-04-20*
@@ -26,5 +23,4 @@ seo:
 - 我住在：上海-浦东新区
 - 我喜欢的运动：羽毛球 🏸 、乒乓球 🏓
 - 我的兴趣：音乐、摄影、设计、喝酒 🍺 、……（几乎任何事情！）
-
 

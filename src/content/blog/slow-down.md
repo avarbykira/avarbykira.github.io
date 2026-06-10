@@ -5,15 +5,7 @@ excerpt: 当你忘记Progress时，Progress自然会出现。
 tags:
 - thoughts
 isFeatured: true
-# seo:
-#   image:
-#     src: '../../assets/images/post-1.jpg'
-#     alt: A person standing at the window
 ---
-
-<!-- ![image](../../assets/images/post-2.jpg) -->
-
-<!-- --- -->
 
 最近越来越觉得我们需要有耐心一点，
 
@@ -29,4 +21,3 @@ isFeatured: true
 > 当你忘记 Progress 时，Progress 自然会出现。
 
 这是我曾写在笔记里的感悟，好像还蛮应景的！
-

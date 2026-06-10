@@ -6,15 +6,7 @@ tags:
 - tips
 isFeatured: false
 # isDraft: true
-# seo:
-#   image:
-#     src: '../../assets/images/post-1.jpg'
-#     alt: A person standing at the window
 ---
-
-<!-- ![image](../../assets/images/post-3.jpg) -->
-
-<!-- --- -->
 
 前阵子我尝试用本地 LLM 自动补全代码，于是在 VSCode 里装了 Continue 插件。这个插件会通过 Ollama 拉起模型。之前我就因为觉得它不太好用卸载过一次，结果后来重新安装时，发现上次留下的用户配置还在。那时候我就有点不爽，心说 Mac 上删东西这件事好像也没想象的那么省心。
 

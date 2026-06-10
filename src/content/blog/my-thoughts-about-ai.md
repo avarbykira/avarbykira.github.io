@@ -6,13 +6,7 @@ tags:
 - AI
 - thoughts
 isFeatured: true
-# seo:
-#   image:
-#     src: '../../assets/images/post-1.jpg'
-#     alt: A person standing at the window
 ---
-
-![image](../../assets/images/post-1.jpg)
 
 > 在这个AI能瞬间生成一切的时代，“亲手制作”反而成了一种奢侈。
 
