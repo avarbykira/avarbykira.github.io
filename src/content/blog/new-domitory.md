@@ -1,11 +1,11 @@
 ---
 title: 新住所好难选
 publishDate: '2026-06-23-16-00'
-excerpt: 
+excerpt: 两间差不多大的房子，一间交通更方便，一间室内空间更大。最后还是选择了更适合打造成工作室的那一间。
 tags:
 - life
 isFeatured: false
-isAiFree: true
+isAiFree: false
 isDraft: true
 ---
 
