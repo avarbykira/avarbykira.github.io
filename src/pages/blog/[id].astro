@@ -6,6 +6,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Button from '../../components/Button.astro';
 import AiFreeCard from '../../components/AiFreeCard.astro';
 import FormattedDate from '../../components/FormattedDate.astro';
+import LongImageShare from '../../components/LongImageShare.astro';
 import PostPreview from '../../components/PostPreview.astro';
 import Subscribe from '../../components/Subscribe.astro';
 import { filterPublishedPosts, sortItemsByDateDesc } from '../../utils/data-utils';
@@ -44,7 +45,7 @@ const minHeadingDepth = Math.min(...tableOfContents.map((heading) => heading.dep
 >
     <div class="blog-post-layout">
         <div class="mx-auto max-w-3xl">
-            <article class="mb-16 sm:mb-24">
+            <article class="mb-16 sm:mb-24" data-long-image-source>
                 <header class="mb-8">
                     <h1 class="font-serif text-3xl leading-tight font-medium sm:text-5xl sm:leading-tight">{title}</h1>
                     <div class="mt-4 text-sm">
@@ -66,7 +67,7 @@ const minHeadingDepth = Math.min(...tableOfContents.map((heading) => heading.dep
                 </div>
                 <footer class="mt-10 sm:mt-15">
                     {isAiFree && <AiFreeCard class="mb-12 sm:mb-15" />}
-                    <div class="border-main/20 flex flex-wrap items-center justify-between gap-6 border-t pt-8 text-sm sm:pt-8 sm:text-base">
+                    <div class="border-main/20 flex flex-wrap items-center justify-between gap-6 border-t pt-8 text-sm sm:pt-8 sm:text-base" data-long-image-exclude>
                         {
                             tags.length > 0 && (
                                 <div class="flex flex-wrap gap-x-5 gap-y-1 text-sm">
@@ -78,9 +79,12 @@ const minHeadingDepth = Math.min(...tableOfContents.map((heading) => heading.dep
                                 </div>
                             )
                         }
-                        <Button class="copy-url-button" aria-label="Copy link" data-url={href} data-tooltip-default="Copy link" data-tooltip-success="Copied">
-                            Share
-                        </Button>
+                        <div class="flex flex-wrap items-end justify-end gap-3">
+                            <Button class="copy-url-button" aria-label="Copy link" data-url={href} data-tooltip-default="Copy link" data-tooltip-success="Copied">
+                                复制链接
+                            </Button>
+                            <LongImageShare title={title} url={href} />
+                        </div>
                     </div>
                 </footer>
             </article>

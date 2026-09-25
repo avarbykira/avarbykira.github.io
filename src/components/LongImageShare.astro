@@ -1,0 +1,377 @@
+---
+import Button from './Button.astro';
+
+type Props = {
+    title: string;
+    url: string;
+};
+
+const { title, url } = Astro.props;
+---
+
+<div class="long-image-share">
+    <Button class="long-image-share-button" type="button" data-long-image-share data-title={title} data-url={url} aria-describedby="long-image-share-status">
+        <span data-long-image-share-label>生成长图</span>
+    </Button>
+    <p class="long-image-share-status" id="long-image-share-status" aria-live="polite" data-long-image-share-status></p>
+</div>
+
+<script>
+    import { toBlob } from 'html-to-image';
+    import JSZip from 'jszip';
+    import QRCode from 'qrcode';
+
+    const EXPORT_WIDTH = 760;
+    const MAX_PAGE_HEIGHT = 6200;
+    const EXPORT_PIXEL_RATIO = 2;
+
+    function setupLongImageShare() {
+        document.querySelectorAll<HTMLButtonElement>('[data-long-image-share]').forEach((button) => {
+            if (button.dataset.initialized) return;
+            button.dataset.initialized = 'true';
+
+            button.addEventListener('click', async () => {
+                if (button.disabled) return;
+
+                const source = document.querySelector<HTMLElement>('[data-long-image-source]');
+                const title = button.dataset.title;
+                const url = button.dataset.url;
+
+                if (!source || !title || !url) {
+                    setStatus(button, '未找到可导出的文章内容。');
+                    return;
+                }
+
+                button.disabled = true;
+                setLabel(button, '正在排版…');
+                setStatus(button, '正在等待字体和图片加载…');
+
+                let exportRoot: HTMLElement | undefined;
+
+                try {
+                    await waitForFonts();
+                    const qrCode = await QRCode.toDataURL(url, {
+                        errorCorrectionLevel: 'M',
+                        margin: 1,
+                        width: 240,
+                        color: { dark: '#171717', light: '#fdfcf9' }
+                    });
+
+                    exportRoot = createExportRoot();
+                    document.body.append(exportRoot);
+
+                    const pages = createExportPages(source, title, url, qrCode, exportRoot);
+                    await waitForImages(exportRoot);
+                    setStatus(button, pages.length > 1 ? `正在生成 ${pages.length} 张长图…` : '正在生成长图…');
+
+                    const imageBlobs = await Promise.all(pages.map((page) => renderPage(page)));
+                    await downloadImages(imageBlobs, title);
+
+                    setStatus(button, imageBlobs.length > 1 ? `已下载包含 ${imageBlobs.length} 张长图的压缩包。` : '长图已下载。');
+                } catch (error) {
+                    console.error('生成长图失败：', error);
+                    setStatus(button, error instanceof Error ? error.message : '生成失败，请稍后重试。');
+                } finally {
+                    exportRoot?.remove();
+                    button.disabled = false;
+                    setLabel(button, '生成长图');
+                }
+            });
+        });
+    }
+
+    async function waitForFonts() {
+        await document.fonts.ready;
+        const failedFonts = [...document.fonts].filter((font) => font.status === 'error');
+
+        if (failedFonts.length > 0) {
+            throw new Error('字体加载失败，未生成长图。请检查网络后重试。');
+        }
+    }
+
+    async function waitForImages(container: HTMLElement) {
+        const images = [...container.querySelectorAll('img')];
+
+        await Promise.all(
+            images.map(async (image) => {
+                if (!image.complete) {
+                    await new Promise<void>((resolve, reject) => {
+                        image.addEventListener('load', () => resolve(), { once: true });
+                        image.addEventListener('error', () => reject(new Error('图片加载失败，未生成长图。')), { once: true });
+                    });
+                }
+
+                if (!image.naturalWidth) {
+                    throw new Error('图片加载失败，未生成长图。');
+                }
+
+                if ('decode' in image) {
+                    await image.decode();
+                }
+            })
+        );
+    }
+
+    function createExportRoot() {
+        const root = document.createElement('div');
+        root.className = 'long-image-export-root';
+        root.setAttribute('aria-hidden', 'true');
+        return root;
+    }
+
+    function createExportPages(source: HTMLElement, title: string, url: string, qrCode: string, root: HTMLElement) {
+        const sourceClone = source.cloneNode(true) as HTMLElement;
+        sourceClone.querySelectorAll('[data-long-image-exclude]').forEach((element) => element.remove());
+
+        const sourceProse = sourceClone.querySelector<HTMLElement>('.prose');
+        if (!sourceProse) {
+            const page = createPage(sourceClone, true);
+            appendExportFooter(page, title, url, qrCode);
+            root.append(page);
+            return [page];
+        }
+
+        const contentBlocks = [...sourceProse.children].map((element) => element.cloneNode(true) as HTMLElement);
+        const articleFooter = sourceClone.querySelector<HTMLElement>('footer')?.cloneNode(true) as HTMLElement | undefined;
+        const pages: HTMLElement[] = [];
+        let page = createPage(sourceClone, true);
+        let prose = getPageProse(page);
+        root.append(page);
+
+        for (const block of contentBlocks) {
+            prose.append(block);
+
+            if (page.scrollHeight > MAX_PAGE_HEIGHT && prose.children.length > 1) {
+                block.remove();
+                pages.push(page);
+                page = createPage(sourceClone, false);
+                prose = getPageProse(page);
+                root.append(page);
+                prose.append(block);
+            }
+        }
+
+        if (articleFooter) page.append(articleFooter);
+        appendExportFooter(page, title, url, qrCode);
+
+        if (page.scrollHeight > MAX_PAGE_HEIGHT && prose.children.length > 0) {
+            page.querySelector('footer')?.remove();
+            page.querySelector('.long-image-export-footer')?.remove();
+            pages.push(page);
+            page = createPage(sourceClone, false);
+            if (articleFooter) page.append(articleFooter.cloneNode(true));
+            appendExportFooter(page, title, url, qrCode);
+            root.append(page);
+        }
+
+        pages.push(page);
+        return pages;
+    }
+
+    function createPage(source: HTMLElement, includeHeader: boolean) {
+        const page = source.cloneNode(true) as HTMLElement;
+        page.classList.add('long-image-export-page');
+        page.removeAttribute('data-long-image-source');
+        page.querySelector('footer')?.remove();
+        if (!includeHeader) page.querySelector('header')?.remove();
+        getPageProse(page).replaceChildren();
+        return page;
+    }
+
+    function getPageProse(page: HTMLElement) {
+        const prose = page.querySelector<HTMLElement>('.prose');
+        if (!prose) throw new Error('文章内容格式不支持导出。');
+        return prose;
+    }
+
+    function appendExportFooter(page: HTMLElement, title: string, url: string, qrCode: string) {
+        const footer = document.createElement('section');
+        footer.className = 'long-image-export-footer';
+        footer.innerHTML = `
+            <img src="${qrCode}" width="120" height="120" alt="${escapeHtml(title)} 原文二维码" />
+            <div>
+                <p>扫码阅读原文</p>
+                <strong>${escapeHtml(title)}</strong>
+                <span>${escapeHtml(url)}</span>
+            </div>
+        `;
+        page.append(footer);
+    }
+
+    async function renderPage(page: HTMLElement) {
+        const blob = await toBlob(page, {
+            backgroundColor: '#fdfcf9',
+            cacheBust: true,
+            pixelRatio: EXPORT_PIXEL_RATIO,
+            width: EXPORT_WIDTH,
+            height: page.scrollHeight
+        });
+
+        if (!blob) throw new Error('图片编码失败，请稍后重试。');
+        return blob;
+    }
+
+    async function downloadImages(blobs: Blob[], title: string) {
+        if (blobs.length === 1) {
+            downloadBlob(blobs[0], getImageFilename(title, 0, 1));
+            return;
+        }
+
+        const archive = new JSZip();
+        blobs.forEach((blob, index) => archive.file(getImageFilename(title, index, blobs.length), blob));
+        downloadBlob(await archive.generateAsync({ type: 'blob' }), `${getSafeTitle(title)}-长图.zip`);
+    }
+
+    function downloadBlob(blob: Blob, filename: string) {
+        const link = document.createElement('a');
+        const objectUrl = URL.createObjectURL(blob);
+        link.href = objectUrl;
+        link.download = filename;
+        link.click();
+        window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+    }
+
+    function getImageFilename(title: string, index: number, total: number) {
+        const safeTitle = getSafeTitle(title);
+        return total > 1 ? `${safeTitle}-长图-${index + 1}.png` : `${safeTitle}-长图.png`;
+    }
+
+    function getSafeTitle(title: string) {
+        return title.replace(/[\\/:*?"<>|]/g, '-').trim() || 'blog-post';
+    }
+
+    function setLabel(button: HTMLButtonElement, label: string) {
+        const labelElement = button.querySelector<HTMLElement>('[data-long-image-share-label]');
+        if (labelElement) labelElement.textContent = label;
+    }
+
+    function setStatus(button: HTMLButtonElement, message: string) {
+        const status = button.parentElement?.querySelector<HTMLElement>('[data-long-image-share-status]');
+        if (status) status.textContent = message;
+    }
+
+    function escapeHtml(value: string) {
+        const element = document.createElement('div');
+        element.textContent = value;
+        return element.innerHTML;
+    }
+
+    setupLongImageShare();
+    document.addEventListener('astro:page-load', setupLongImageShare);
+</script>
+
+<style is:global>
+    .long-image-share {
+        position: relative;
+        display: block;
+    }
+
+    .long-image-share-button:disabled {
+        cursor: wait;
+        opacity: 0.58;
+    }
+
+    .long-image-share-status {
+        position: absolute;
+        top: calc(100% + 0.45rem);
+        right: 0;
+        z-index: 1;
+        width: max-content;
+        max-width: min(20rem, 85vw);
+        margin: 0;
+        color: color-mix(in srgb, var(--text-color-main) 60%, transparent);
+        font-size: 0.75rem;
+        line-height: 1.35;
+        text-align: right;
+    }
+
+    .long-image-export-root {
+        position: fixed;
+        top: 0;
+        left: -100000px;
+        z-index: -1;
+        width: 760px;
+        overflow: hidden;
+        color: #171717;
+        --text-main: #171717;
+        --bg-main: #fdfcf9;
+        --bg-muted: #f1efe8;
+        --border-main: #171717;
+        --border-soft: rgba(23, 23, 23, 0.22);
+    }
+
+    .long-image-export-page {
+        box-sizing: border-box;
+        width: 760px;
+        margin: 0;
+        padding: 54px 58px 60px;
+        background: #fdfcf9;
+    }
+
+    .long-image-export-page header {
+        margin-bottom: 2rem;
+    }
+
+    .long-image-export-page .prose {
+        max-width: none;
+    }
+
+    .long-image-export-page .prose img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    .long-image-export-page .aifb {
+        margin-top: 2.5rem;
+        margin-bottom: 0;
+    }
+
+    .long-image-export-footer {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 2.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid rgba(23, 23, 23, 0.22);
+    }
+
+    .long-image-export-footer img {
+        display: block;
+        width: 120px;
+        height: 120px;
+        flex: 0 0 120px;
+    }
+
+    .long-image-export-footer div {
+        min-width: 0;
+    }
+
+    .long-image-export-footer p,
+    .long-image-export-footer strong,
+    .long-image-export-footer span {
+        display: block;
+        margin: 0;
+    }
+
+    .long-image-export-footer p {
+        color: rgba(23, 23, 23, 0.62);
+        font-size: 0.78rem;
+        letter-spacing: 0.08em;
+    }
+
+    .long-image-export-footer strong {
+        margin-top: 0.3rem;
+        font-family: var(--font-serif);
+        font-size: 1.15rem;
+        font-weight: 600;
+        line-height: 1.25;
+    }
+
+    .long-image-export-footer span {
+        margin-top: 0.35rem;
+        overflow-wrap: anywhere;
+        color: rgba(23, 23, 23, 0.6);
+        font-size: 0.72rem;
+        line-height: 1.35;
+    }
+</style>
