@@ -6,7 +6,7 @@ tags:
 - thoughts
 isFeatured: false
 isAiFree: true
-isDraft: true
+isDraft: false
 ---
 
 「应该认为，西西弗斯是幸福的。」因为他认识到生活的荒谬，并接受了它，通过反抗荒谬而达到充实。
